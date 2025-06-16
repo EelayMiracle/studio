@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- Базовый favicon -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon" sizes="any">
+    
+    <!-- SVG-версия (для современных браузеров) -->
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    
+    <!-- Apple Touch Icon (для iOS) -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    
+    <!-- Manifest для PWA -->
+    <link rel="manifest" href="site.webmanifest">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eelay Miracle Studio</title>
+    <style>
+        /* Общие стили */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            position: relative;
+        }
+
+        /* Фоновое изображение с затемнением */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)), /* Затемнение */
+                url('f1.jpg') center/cover no-repeat; /* Фоновое изображение */
+            z-index: -2;
+        }
+
+        /* Поверх фонового изображения добавим ваш градиент с прозрачностью */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+
+        /* Шапка с логотипом */
+        .header {
+			height: 300px; /* Фиксированная высота */
+			
+            width: 100%;
+            padding: 5px 0;
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('3v3.jpg') center/cover no-repeat;
+            opacity: 0.3;
+            z-index: -1;
+        }
+        
+        .logo-container {
+			
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-img:hover {
+            transform: scale(1.05);
+        }
+
+        .logo-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 5px 0;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-subtitle {
+            font-size: 1em;
+            opacity: 0.8;
+            margin: 0;
+            color: white;
+        }
+
+        /* Галерея игр с горизонтальным скроллом */
+        .games-gallery {
+            width: 100%;
+            max-width: 1200px;
+            padding: 30px 20px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .games-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 20px;
+            padding: 20px 0;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Для Firefox */
+        }
+
+        .games-container::-webkit-scrollbar {
+            display: none; /* Для Chrome/Safari */
+        }
+
+        .game-card {
+            flex: 0 0 280px;
+            height: 350px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .game-image {
+            width: 100%;
+            height: 160px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-title {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: white;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .game-description {
+            font-size: 0.9em;
+            opacity: 0.9;
+			 margin-top: auto;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .play-btn {
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 198, 255, 0.4);
+        }
+
+        /* Кнопки навигации */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .prev-btn {
+            left: 10px;
+        }
+
+        .next-btn {
+            right: 10px;
+        }
+
+        /* Декоративные элементы */
+        .decorations {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .rectangle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(45deg);
+        }
+
+        @media (max-width: 768px) {
+            .logo-img {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .logo-title {
+                font-size: 1.5em;
+            }
+            
+            .game-card {
+                flex: 0 0 240px;
+                height: 320px;
+            }
+            
+            .game-title {
+                font-size: 1.1em;
+            }
+            
+            .nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="decorations" id="decorations"></div>
+    
+    <!-- Шапка с логотипом -->
+    <header class="header">
+        <a href="https://vk.link/potencial_math" class="logo-container" target="_blank">
+            <img src="logo.png" alt="Логотип Potencial" class="logo-img">
+            <div class="logo-title">
+              <p>Eelay Miracle Studio</p>
+              <p>Уроки математики, шахмат и программирования</p>
+                <p>Запись на урок: +7 978 343 32 83</p>
+            </div>
+        </a>
+    </header>
+    
+    <!-- Галерея игр с горизонтальным скроллом -->
+    <div class="games-gallery">
+        <button class="nav-btn prev-btn" onclick="scrollGallery(-1)">&#10094;</button>
+        <div class="games-container" id="gamesContainer">
+            <!-- Карточка игры 1 -->
+            <div class="game-card" onclick="window.location.href='podpod.html';">
+                <img src="3pod.webp" alt="3 под подозрением" class="game-image">
+                <h2 class="game-title">3 под подозрением</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Угадайте скрытые смайлики за ограниченное число попыток.
+                    Развивайте логику и внимание в этой увлекательной игре!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 2 -->
+            <div class="game-card" onclick="window.location.href='SmileGame.html';">
+                <img src="sm1.jpg" alt="Математика со смайликами" class="game-image">
+                <h2 class="game-title">Математика со смайликами</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Решайте математические уравнения, где числа заменены смайликами. Отличный способ потренировать математические навыки!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 3 -->
+            <div class="game-card" onclick="window.location.href='colorme.html';">
+                <img src="preview-xl.jpg" alt="Цветная память" class="game-image">
+                <h2 class="game-title">Цветная память</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Раскройте все карточки нужного цвета. Отличный способ прокачать свою память!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 4 -->
+            <div class="game-card" onclick="window.location.href='perem-primer 3.html';">
+                <img src="395390532.jpg" alt="Перемешанный пример" class="game-image">
+                <h2 class="game-title">Перемешанный пример</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Собери пример из символов. Отличный способ прокачать свою внимательность!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 5 -->
+            <div class="game-card" onclick="window.location.href='Anagram.html';">
+                <img src="slova.jpg" alt="Анаграммы" class="game-image">
+                <h2 class="game-title">Анаграммы</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Собери слова из букв. Отличный способ прокачать свою эрудицию!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 6 -->
+            <div class="game-card" onclick="window.location.href='UgadChislo.html';">
+                <img src="quest.jpg" alt="Угадай число" class="game-image">
+                <h2 class="game-title">Угадай число</h2>
+                <p class="game-description">
+                    🎯 Цель игры: компьютер загадал число, попробуй угадать! Или загадай ты и пусть компьютер угадывает.
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 7 -->
+            <div class="game-card" onclick="window.location.href='basche.html';">
+                <img src="bs1.jpg" alt="Баше" class="game-image">
+                <h2 class="game-title">Баше</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Забрать последний камень и победить! Развивайте логику и стратегическое мышление в этой классической игре!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            
+            <!-- Карточка игры 8 -->
+            <div class="game-card" onclick="window.location.href='https://www.friv4school.com/z/games/colorme/game.html';">
+                <img src="c1.png" alt="Color Me" class="game-image">
+                <h2 class="game-title">Color Me</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Заполнить цветами по рисунку
+					
+                </p>
+				<br>
+                <button class="play-btn">Играть</button>
+            </div>
+                                   
+            <!-- Карточка игры 9 -->
+            <div class="game-card" onclick="window.location.href='https://matheasily.com/brain-teasers.html';">
+                <img src="700-nw1.jpg" alt="Посчитай в куче" class="game-image">
+                <h2 class="game-title">Посчитай в куче</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Соотнесите предметы определенным значениям. Придите к окончательному ответу
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+        </div>
+        <button class="nav-btn next-btn" onclick="scrollGallery(1)">&#10095;</button>
+    </div>
+
+    <script>
+        // Создаем декоративные элементы
+        const decorations = document.getElementById('decorations');
+        const colors = ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.07)'];
+        
+        // Создаем круги
+        for (let i = 0; i < 10; i++) {
+            const circle = document.createElement('div');
+            circle.className = 'circle';
+            
+            const size = Math.random() * 200 + 50;
+            const posX = Math.random() * 100;
+            const posY = Math.random() * 100;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            circle.style.width = `${size}px`;
+            circle.style.height = `${size}px`;
+            circle.style.left = `${posX}%`;
+            circle.style.top = `${posY}%`;
+            circle.style.background = color;
+            circle.style.opacity = Math.random() * 0.5 + 0.1;
+            
+            decorations.appendChild(circle);
+        }
+        
+        // Создаем прямоугольники
+        for (let i = 0; i < 5; i++) {
+            const rect = document.createElement('div');
+            rect.className = 'rectangle';
+            
+            const width = Math.random() * 150 + 50;
+            const height = Math.random() * 50 + 20;
+            const posX = Math.random() * 100;
+            const posY = Math.random() * 100;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            rect.style.width = `${width}px`;
+            rect.style.height = `${height}px`;
+            rect.style.left = `${posX}%`;
+            rect.style.top = `${posY}%`;
+            rect.style.background = color;
+            rect.style.opacity = Math.random() * 0.3 + 0.1;
+            
+            decorations.appendChild(rect);
+        }
+        
+        // Функция для прокрутки галереи
+        function scrollGallery(direction) {
+            const container = document.getElementById('gamesContainer');
+            const scrollAmount = 700; // Количество пикселей для прокрутки
+            
+            if (direction === -1) {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }        
+        
+    </script>
+</body>
+</html>
