@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анаграмма - Угадай слово</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+		body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)), /* Затемнение */
+            url('f1.jpg') center/cover no-repeat; /* Фоновое изображение */
+        z-index: -2;
+    }
+
+    /* Поверх фонового изображения добавим ваш градиент с прозрачностью */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+        z-index: -1;
+    }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .game-container {
+            background-color: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 95%;
+            width: 600px;
+            box-sizing: border-box;
+			margin: 200px;
+        }
+
+        .settings {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .letters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .letter {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .letter:hover {
+            background-color: #e0e0e0;
+        }
+
+        .letter.used {
+            background-color: #ddd;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .guess-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 5px;
+        }
+
+        .guess-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer; /* Возвращаем курсор */
+            flex-shrink: 0;
+        }
+
+        .guess-cell.correct {
+            background-color: #a5d6a7;
+            border-color: #81c784;
+        }
+
+        .guess-cell.incorrect {
+            background-color: #ffabab;
+            border-color: #ff8a80;
+        }
+
+        .guess-cell.selected {
+            border: 3px solid #64b5f6;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            transform: scale(1.05);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #388e3c;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .hint-button {
+            background-color: #2196f3;
+        }
+
+        .hint-button:hover {
+            background-color: #1976d2;
+        }
+
+        .new-game-button {
+            background-color: #f44336;
+        }
+
+        .new-game-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .message {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .success {
+            background-color: #e8f5e9;
+            color: #388e3c;
+            font-weight: bold;
+        }
+
+        .hint {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        select, input {
+            padding: 5px;
+            margin-right: 15px;
+        }
+
+        .open-letter-button {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 10px 15px;
+        }
+
+        .open-letter-button:hover {
+            background-color: #f57c00;
+        }
+
+        .open-letter-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .settings {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .settings label, .settings select, .settings button {
+                margin-bottom: 5px;
+            }
+        }
+		 .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Анаграмма&nbsp;<a href="index.html" class="back-button">←</a></h1>
+
+        <div class="settings">
+          <label for="word-length">Количество букв:</label>
+            <select id="word-length">
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+				<option value="8">8</option>
+            </select>
+
+            <button id="new-game" class="new-game-button">Новая игра</button>
+        </div>
+
+        <div class="letters-container" id="letters-container"></div>
+
+        <div class="guess-container" id="guess-container"></div>
+
+        <div class="buttons">
+            <button id="check" >Проверить</button>
+            <button id="hint-button" class="hint-button">Подсказка</button>
+            <button id="open-letter" class="open-letter-button" >Открыть букву</button>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="hint" id="hint"></div>
+    </div>
+
+    <script>
+        // Словарь слов с подсказками
+        const wordsDatabase = {
+            3: [
+                { word: "кот", hint: "Домашнее животное, которое ловит мышей" },
+                { word: "лес", hint: "Место, где растет много деревьев" },
+                { word: "дом", hint: "Место, где живут люди" },
+                { word: "нос", hint: "Часть лица, которая чувствует запахи" },
+                { word: "год", hint: "Промежуток времени в 12 месяцев" }
+            ],
+            4: [
+                { word: "стол", hint: "Мебель с плоской поверхностью для работы или еды" },
+                { word: "крот", hint: "Маленькое животное, живущее под землей" },
+                { word: "лиса", hint: "Хитрая рыжая лесная плутовка" },
+                { word: "роза", hint: "Красивый цветок с шипами" },
+                { word: "море", hint: "Большой водоем с соленой водой" },
+                { word: "ночь", hint: "Темное время суток" },
+				{ word: "поле", hint: "Большое открытое пространство с травой или посевами" },
+				{ word: "рыба", hint: "Живет в воде, плавает" },
+                { word: "зима", hint: "Холодное время года со снегом" },
+				{ word: "мышь", hint: "Маленький грызун" },
+				{ word: "стол", hint: "Предмет мебели для еды" },
+				{ word: "стул", hint: "Предмет мебели для сидения" },
+				{ word: "окно", hint: "Смотрят на улицу через него" },
+				{ word: "шарф", hint: "Носят на шее в холод" }
+				
+            ],
+            5: [
+                { word: "океан", hint: "Очень большое море" },
+                { word: "дождь", hint: "Осадки в виде капель воды с неба" },
+                { word: "книга", hint: "Источник знаний с бумажными страницами" },
+                { word: "город", hint: "Большое поселение с многоэтажными домами" },
+				{ word: "ветер", hint: "Движение воздуха, которое мы чувствуем кожей" },
+				{ word: "горох", hint: "Зеленый, растет стручками" },
+				{ word: "лампа", hint: "Источник света в доме" },				
+				{ word: "трава", hint: "Зеленый покров земли" },
+				{ word: "сахар", hint: "Сладкий порошок в чай" },
+				{ word: "ручка", hint: "Пишет на бумаге" },				
+				{ word: "носок", hint: "Одевают на ноги" },
+				{ word: "хлеб", hint: "Пекут из муки" },
+				{ word: "вилка", hint: "Едят ею, держут в руке" },
+				{ word: "ложка", hint: "Едят ей суп, держут в руке" },
+				{ word: "чашка", hint: "Пьют из нее чай или кофе" },
+				{ word: "дверь", hint: "Открывает вход в комнату" },				
+				{ word: "кукла", hint: "Игрушка для девочек" },
+				{ word: "банка", hint: "Хранят варенье в ней" },
+				{ word: "санки", hint: "Катаются с горки зимой" },
+				{ word: "шапка", hint: "Носят на голове в холод" },
+				
+            ],
+            6: [
+                { word: "радуга", hint: "Разноцветная дуга на небе после дождя" },
+                { word: "телефон", hint: "Устройство для разговоров на расстоянии" },
+                { word: "недруг", hint: "Враг по-другому" },
+				{ word: "дерево", hint: "Под ним в грозу лучше не прятаться" },
+				{ word: "солнце", hint: "Светит днем" },
+				{ word: "вранье", hint: "Неправдивая ухмылка" },
+				{ word: "йогурт", hint: "Вкусный молочный продукт" },
+				{ word: "август", hint: "Последний месяц лето" },
+				{ word: "аптека", hint: "Место с лекарствами" },
+				{ word: "собака", hint: "Друг человека" },
+            ],
+            7: [
+                { word: "загадка", hint: "Её нужно разгадать" },
+				{ word: "история", hint: "Её можно расскзать" },
+				{ word: "рассказ", hint: "Небольшое повествование" },
+				{ word: "топливо", hint: "Из него производят энергию" },
+				{ word: "рисунок", hint: "Изображение на листе бумаги" },
+				{ word: "циркуль", hint: "Им чертят круг" },
+				{ word: "экзамен", hint: "Испытание в институте" },
+				{ word: "учитель", hint: "Дает знания в школе" },
+				{ word: "кровать", hint: "Мы на ней спим" },
+				{ word: "тетрадь", hint: "В ней пишут" },
+            ],
+			8: [
+                { word: "раковина", hint: "Туда сливают воду" },
+				{ word: "банкомат", hint: "Выдает деньги" },
+				{ word: "оленёнок", hint: "Детеныш оленя" },
+				{ word: "маслёнок", hint: "Гриб такой" },
+				{ word: "аквапарк", hint: "Там есть водные горки" },
+				{ word: "больница", hint: "Место, где лечат больных" },
+				{ word: "ласточка", hint: "Птичка" },
+				{ word: "кровать", hint: "Это есть в спальне" },
+            ]
+        };
+
+        // Элементы DOM
+        const lettersContainer = document.getElementById('letters-container');
+        const guessContainer = document.getElementById('guess-container');
+        const checkButton = document.getElementById('check');
+        const hintButton = document.getElementById('hint-button');
+        const newGameButton = document.getElementById('new-game');
+        const messageDiv = document.getElementById('message');
+        const hintDiv = document.getElementById('hint');
+        const wordLengthSelect = document.getElementById('word-length');
+        const openLetterButton = document.getElementById('open-letter');
+
+        // Игровые переменные
+        let currentWord = '';
+        let currentHint = '';
+        let letters = [];
+        let guessCells = [];
+        let lettersUsed = [];
+        let selectedCellIndex = -1; // Индекс выбранной ячейки
+
+        // Инициализация игры
+        function initGame() {
+            // Очищаем предыдущее состояние
+            lettersContainer.innerHTML = '';
+            guessContainer.innerHTML = '';
+            messageDiv.textContent = '';
+            messageDiv.className = 'message';
+            hintDiv.style.display = 'none';
+            hintDiv.textContent = '';
+            lettersUsed = [];
+            selectedCellIndex = -1; // Сбрасываем выбранную ячейку
+            checkButton.disabled = false; // Включаем кнопку "Проверить"
+            openLetterButton.disabled = false; // включаем кнопку "Открыть букву"
+
+            // Получаем выбранную длину слова
+            const wordLength = parseInt(wordLengthSelect.value);
+
+            // Выбираем случайное слово из базы
+            const words = wordsDatabase[wordLength];
+            if (!words || words.length === 0) {
+                showMessage('Нет слов с такой длиной в базе', true);
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * words.length);
+            currentWord = words[randomIndex].word.toLowerCase();
+            currentHint = words[randomIndex].hint;
+
+            // Создаем массив букв и перемешиваем его
+            letters = currentWord.split('');
+            shuffleArray(letters);
+
+            // Создаем ячейки для букв
+            letters.forEach((letter, index) => {
+                const letterElement = document.createElement('div');
+                letterElement.className = 'letter';
+                letterElement.textContent = letter;
+                letterElement.dataset.index = index;
+                letterElement.addEventListener('click', handleLetterClick);
+                lettersContainer.appendChild(letterElement);
+            });
+
+            // Создаем ячейки для угадывания
+            guessCells = [];
+            for (let i = 0; i < currentWord.length; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'guess-cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', handleGuessCellClick); // Добавляем обработчик клика
+                guessContainer.appendChild(cell);
+                guessCells.push(cell);
+            }
+            selectFirstEmptyCell(); //  Выбираем первую ячейку при старте
+
+        }
+
+        // Перемешивание массива
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Функция для нахождения первой пустой ячейки
+        function findFirstEmptyCellIndex() {
+            for (let i = 0; i < guessCells.length; i++) {
+                if (!guessCells[i].textContent) {
+                    return i;
+                }
+            }
+            return -1; // Если все ячейки заполнены
+        }
+
+        // Функция для выделения ячейки
+        function selectCell(index) {
+             if (index === -1) {
+                removeCellSelection(); // Убираем выделение, если index -1
+                return;
+            }
+
+            // Сбрасываем выделение предыдущей ячейки
+            removeCellSelection();
+
+            selectedCellIndex = index;
+            guessCells[index].classList.add('selected');
+        }
+
+        // Функция для снятия выделения с ячейки
+        function removeCellSelection() {
+            if (selectedCellIndex !== -1) {
+                guessCells[selectedCellIndex].classList.remove('selected');
+                selectedCellIndex = -1;
+            }
+        }
+
+        // Функция для выбора первой пустой ячейки
+        function selectFirstEmptyCell() {
+            const firstEmpty = findFirstEmptyCellIndex();
+            selectCell(firstEmpty);
+        }
+
+        // Обработчик клика по букве
+        function handleLetterClick(event) {
+            const letterElement = event.target;
+
+            // Если буква уже использована, ничего не делаем
+            if (letterElement.classList.contains('used')) return;
+            // Если есть выбранная ячейка
+            if (selectedCellIndex !== -1) {
+                // Помещаем букву в выбранную ячейку
+                guessCells[selectedCellIndex].textContent = letterElement.textContent;
+                guessCells[selectedCellIndex].dataset.letterIndex = letterElement.dataset.index;
+
+                // Помечаем букву как использованную
+                letterElement.classList.add('used');
+                lettersUsed.push(letterElement.textContent);
+
+                // Выбираем следующую пустую ячейку
+                selectFirstEmptyCell();
+            }
+        }
+
+        // Обработчик клика по ячейке угадывания
+        function handleGuessCellClick(event) {
+            const cell = event.target;
+            const index = parseInt(cell.dataset.index);
+
+            // Если в ячейке уже есть буква, убираем её
+            if (cell.textContent) {
+                // Находим соответствующую букву и возвращаем её обратно
+                const letterIndex = cell.dataset.letterIndex;
+                if (letterIndex !== undefined) {
+                    const letterElement = lettersContainer.querySelector(`.letter[data-index="${letterIndex}"]`);
+                    if (letterElement) {
+                        letterElement.classList.remove('used');
+                    }
+                }
+
+                cell.textContent = '';
+                delete cell.dataset.letterIndex;
+
+                // После очистки ячейки снова выбираем ее
+                selectCell(index);
+            } else { // Если ячейка пустая, выбираем ее
+                selectCell(index);
+            }
+        }
+
+        // Проверка, все ли ячейки заполнены
+        function isGuessComplete() {
+            return guessCells.every(cell => cell.textContent);
+        }
+
+        // Проверка угаданного слова
+        function checkGuess() {
+            // Собираем угаданное слово
+            let guessedWord = '';
+            guessCells.forEach(cell => {
+                guessedWord += cell.textContent;
+            });
+
+            // Сбрасываем подсветку
+            guessCells.forEach(cell => {
+                cell.classList.remove('correct', 'incorrect');
+            });
+
+            // Проверяем каждую букву
+            for (let i = 0; i < guessCells.length; i++) {
+                const cell = guessCells[i];
+                const letter = cell.textContent;
+
+                // Если ячейка пустая, пропускаем
+                if (!letter) continue;
+
+                // Проверяем, есть ли такая буква в слове вообще
+                if (!currentWord.includes(letter)) {
+                    cell.classList.add('incorrect');
+                    continue;
+                }
+
+                // Проверяем, стоит ли буква на правильном месте
+                if (letter === currentWord[i]) {
+                    cell.classList.add('correct');
+                } else {
+                    cell.classList.add('incorrect');
+                }
+            }
+             // Проверяем, совпадает ли с загаданным словом
+             if (guessedWord === currentWord) {
+                // Подсвечиваем все буквы зеленым
+                guessCells.forEach(cell => {
+                    cell.classList.add('correct');
+                });
+
+                showMessage('Поздравляем! Вы угадали слово!', false);
+                checkButton.disabled = true;
+                openLetterButton.disabled = true;
+                return;
+            }
+
+            showMessage('Не все буквы на своих местах! Попробуйте еще раз.', true);
+        }
+
+        // Показать подсказку
+        function showHint() {
+            hintDiv.textContent = currentHint;
+            hintDiv.style.display = 'block';
+        }
+
+        // Показать сообщение
+        function showMessage(message, isError) {
+            messageDiv.textContent = message;
+            messageDiv.className = isError ? 'message error' : 'message success';
+        }
+
+         // Функция для открытия буквы
+         function openLetter() {
+            // Находим первую пустую ячейку
+            //const emptyCellIndex = selectedCellIndex;  // ОШИБКА: Была выбрана первая пустая, а должна была быть выбранная ячейка
+             if (selectedCellIndex === -1) {
+                 showMessage("Выберите ячейку для открытия буквы!", true);
+                 return;
+             }
+
+            // Находим правильную букву для выбранной позиции
+            const correctLetter = currentWord[selectedCellIndex];
+
+            // Находим букву в контейнере букв
+            let letterElement = null;
+            for (const element of lettersContainer.children) {
+                if (element.textContent === correctLetter && !element.classList.contains("used")) {
+                    letterElement = element;
+                    break;
+                }
+            }
+
+            if (!letterElement) {
+                // Если вдруг правильной буквы больше нет в контейнере, то что-то не так
+                showMessage("Ошибка: правильная буква не найдена.", true);
+                return;
+            }
+
+            // Помещаем букву в выбранную ячейку угадывания
+            guessCells[selectedCellIndex].textContent = correctLetter;
+            guessCells[selectedCellIndex].dataset.letterIndex = letterElement.dataset.index;
+            letterElement.classList.add('used');
+            lettersUsed.push(correctLetter);
+
+            removeCellSelection(); // Снимаем выделение с ячейки
+            //selectFirstEmptyCell(); // Выбираем следующую пустую ячейку
+        }
+
+        // Обработчики событий
+        checkButton.addEventListener('click', checkGuess);
+        hintButton.addEventListener('click', showHint);
+        newGameButton.addEventListener('click', initGame);
+        openLetterButton.addEventListener('click', openLetter);
+
+        // Начало игры при загрузке страницы
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
