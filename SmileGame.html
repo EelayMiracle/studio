@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-	
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Математика со смайликами</title>
@@ -261,10 +260,10 @@
             transition: all 0.3s;
         }
         .check-btn {
-            background-color: #4CAF50;
+            background-color: #f57c00;
         }
         .check-btn:hover {
-            background-color: #45a049;
+            background-color: #E37607;
         }
         .check-btn:disabled {
             background-color: #cccccc;
@@ -283,29 +282,19 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-        }
-		{
-            background: linear-gradient(to right, #00c6ff, #0072ff);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1em;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        }		
+           
         .new-game-btn:hover {
             background-color: #2980b9;
+			
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .back-btn {
-            background-color: #e74c3c;
+            background-color: #AF26FF;
         }
         .back-btn:hover {
-            background-color: #c0392b;
+            background-color: #8C1BCD;
         }
         .message {
             font-size: 1.5em;
@@ -411,13 +400,14 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
 		
+		
     </style>
 </head>
 <body>
 	<div class="decorations" id="decorations"></div>
     <div class="game-area">
 		<!-- Обновленная шапка с логотипом -->    	
-        <h1>Математика со смайликами<a href="index.html" class="back-button">←</a></h1>
+        <h1>Математика со смайликами<a href="index.html" class="back-button"> ←</a></h1>
         
         <div id="mode-selection-screen">
             <h2>Выберите тип задания:</h2>
@@ -455,7 +445,7 @@
                 </div>
             </div>
             
-            <button id="new-game-btn" class="action-btn new-game-btn">Новая игра</button>
+            <button id="back-btn" class="action-btn back-btn">К выбору модели</button>
             
             <div class="equation" id="equation-display"></div>
             
@@ -463,7 +453,8 @@
             
             <div class="controls">
                 <button id="check-btn" class="action-btn check-btn" disabled>Проверить</button>
-                <button id="back-btn" class="action-btn back-btn">Назад к выбору</button>
+				<button id="new-game-btn" class="action-btn new-game-btn">Новая игра</button>
+                
             </div>
             
             <div class="message" id="message"></div>
@@ -485,7 +476,7 @@
         let selectedNumbers = [];
         let gameHistory = [];
         let usedEmojis = [];
-        
+
         // Элементы интерфейса
         const modeSelectionScreen = document.getElementById('mode-selection-screen');
         const gameScreen = document.getElementById('game-screen');
@@ -499,7 +490,8 @@
         const minValueInput = document.getElementById('min-value');
         const maxValueInput = document.getElementById('max-value');
         const optionsCountSelect = document.getElementById('options-count');
-        
+        let numberBoxes = []; // Массив для хранения всех number-box элементов
+
         // Обработчики событий
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -507,24 +499,24 @@
                 startGame();
             });
         });
-        
+
         newGameBtn.addEventListener('click', startGame);
         backBtn.addEventListener('click', () => {
             gameScreen.style.display = 'none';
             modeSelectionScreen.style.display = 'block';
         });
-        
+
         checkBtn.addEventListener('click', checkAnswer);
-        
+
         // Функция начала игры
         function startGame() {
             modeSelectionScreen.style.display = 'none';
             gameScreen.style.display = 'block';
-            
+
             const minValue = parseInt(minValueInput.value);
             const maxValue = parseInt(maxValueInput.value);
             const optionsCount = parseInt(optionsCountSelect.value);
-            
+
             // Проверка корректности введенных значений
             if (minValue >= maxValue) {
                 alert('Минимальное значение должно быть меньше максимального!');
@@ -534,205 +526,229 @@
                 alert('Минимальное значение должно быть не меньше 1!');
                 return;
             }
-            
+
             // Генерация случайных чисел
             correctNumbers = generateNumbers(currentMode, minValue, maxValue);
-            const allNumbers = generateOptions(correctNumbers, optionsCount, minValue, maxValue);
-            
+            const allNumbers = generateOptions(correctNumbers, optionsCount, minValue, maxValue, currentMode);
+
             // Выбор случайных смайликов
             usedEmojis = [];
             const shuffledEmojis = [...EMOJIS].sort(() => Math.random() - 0.5);
-            
+
             // Отображение уравнения
             displayEquation(currentMode, correctNumbers, shuffledEmojis);
-            
+
             // Отображение вариантов ответа
             displayNumberOptions(allNumbers);
-            
+
             // Сброс выбора
             selectedNumbers = [];
             checkBtn.disabled = true;
             messageDiv.textContent = '';
             messageDiv.className = 'message';
         }
-        
+
         // Генерация чисел для уравнения в зависимости от режима
         function generateNumbers(mode, min, max) {
             let a, b, c;
-            
+
             switch(mode) {
                 case 'add2':
                     a = getRandomInt(min, Math.floor(max / 2));
                     b = getRandomInt(min, max - a);
                     return [a, b, a + b];
-                
+
                 case 'sub2':
                     b = getRandomInt(min, Math.floor(max / 2));
                     a = getRandomInt(b + min, max);
                     return [a, b, a - b];
-                
+
                 case 'add3':
                     a = getRandomInt(min, Math.floor(max / 3));
                     b = getRandomInt(min, Math.floor((max - a) / 2));
                     c = getRandomInt(min, max - a - b);
                     return [a, b, c, a + b + c];
-                
+
                 case 'sub3':
                     b = getRandomInt(min, Math.floor(max / 3));
                     c = getRandomInt(min, Math.floor((max - b) / 2));
                     a = getRandomInt(b + c + min, max);
                     return [a, b, c, a - b - c];
-                
+
                 case 'mult_add':
                     a = getRandomInt(1, Math.floor(Math.sqrt(max)));
                     b = getRandomInt(1, Math.floor((max - min) / a));
                     c = getRandomInt(min, max - a * b);
                     return [a, b, c, a * b + c];
-                
+
                 case 'mult_sub':
                     a = getRandomInt(1, Math.floor(Math.sqrt(max)));
                     b = getRandomInt(1, Math.floor((max - min) / a));
                     c = getRandomInt(min, a * b - min);
                     return [a, b, c, a * b - c];
-                
+
                 case 'div_add':
                     b = getRandomInt(2, Math.floor(Math.sqrt(max)));
                     a = b * getRandomInt(1, Math.floor((max - min) / b));
                     c = getRandomInt(min, max - a / b);
                     return [a, b, c, a / b + c];
-                
+
                 case 'div_sub':
                     b = getRandomInt(2, Math.floor(Math.sqrt(max)));
                     a = b * getRandomInt(2, Math.floor((max + min) / b));
                     c = getRandomInt(min, a / b - min);
                     return [a, b, c, a / b - c];
-                
+
                 default:
                     return [];
             }
         }
-        
+
         // Генерация вариантов ответа (правильные + случайные)
-        function generateOptions(correctNumbers, count, min, max) {
-            // Берем только числа, которые заменены смайликами (все кроме последнего - результата)
+        function generateOptions(correctNumbers, count, min, max, mode) {
             const correctOptions = correctNumbers.slice(0, -1);
             let options = [...correctOptions];
-            
-            // Добавляем случайные числа (могут быть дубликаты)
+
+            // Узнаем результат (последнее число)
+            const result = correctNumbers[correctNumbers.length - 1];
+
             while (options.length < count) {
-                const randomNum = getRandomInt(min, max);
+                let randomNum;
+
+                // Для режимов сложения ограничиваем случайные числа суммой
+                if (mode === 'add2' || mode === 'add3') {
+                    randomNum = getRandomInt(min, result); // Случайное число до суммы
+                } else {
+                    randomNum = getRandomInt(min, max);  // В остальных режимах без ограничений
+                }
+
                 options.push(randomNum);
+
             }
-            
+
             // Перемешиваем массив
             return shuffleArray(options);
         }
-        
+
         // Отображение уравнения
         function displayEquation(mode, numbers, emojis) {
             let equation = '';
             usedEmojis = [];
-            
+
             switch(mode) {
                 case 'add2':
                     equation = `${emojis[0]} + ${emojis[1]} = ${numbers[2]}`;
                     usedEmojis = [emojis[0], emojis[1]];
                     break;
-                
+
                 case 'sub2':
                     equation = `${emojis[0]} - ${emojis[1]} = ${numbers[2]}`;
                     usedEmojis = [emojis[0], emojis[1]];
                     break;
-                
+
                 case 'add3':
                     equation = `${emojis[0]} + ${emojis[1]} + ${emojis[2]} = ${numbers[3]}`;
                     usedEmojis = [emojis[0], emojis[1], emojis[2]];
                     break;
-                
+
                 case 'sub3':
                     equation = `${emojis[0]} - ${emojis[1]} - ${emojis[2]} = ${numbers[3]}`;
                     usedEmojis = [emojis[0], emojis[1], emojis[2]];
                     break;
-                
+
                 case 'mult_add':
                     equation = `${emojis[0]} × ${emojis[1]} + ${emojis[2]} = ${numbers[3]}`;
                     usedEmojis = [emojis[0], emojis[1], emojis[2]];
                     break;
-                
+
                 case 'mult_sub':
                     equation = `${emojis[0]} × ${emojis[1]} - ${emojis[2]} = ${numbers[3]}`;
                     usedEmojis = [emojis[0], emojis[1], emojis[2]];
                     break;
-                
+
                 case 'div_add':
                     equation = `${emojis[0]} ÷ ${emojis[1]} + ${emojis[2]} = ${numbers[3]}`;
                     usedEmojis = [emojis[0], emojis[1], emojis[2]];
                     break;
-                
+
                 case 'div_sub':
                     equation = `${emojis[0]} ÷ ${emojis[1]} - ${emojis[2]} = ${numbers[3]}`;
                     usedEmojis = [emojis[0], emojis[1], emojis[2]];
                     break;
             }
-            
+
             equationDisplay.textContent = equation;
         }
-        
+
         // Отображение вариантов ответа
-        function displayNumberOptions(numbers) {
+         function displayNumberOptions(numbers) {
             numbersGrid.innerHTML = '';
-            
+            numberBoxes = []; // Очищаем массив перед каждым новым набором
+
             numbers.forEach(num => {
                 const numberBox = document.createElement('div');
                 numberBox.className = 'number-box';
                 numberBox.textContent = num;
+                numberBox.dataset.number = num; // Добавляем число в data атрибут
                 numberBox.addEventListener('click', () => toggleNumberSelection(num, numberBox));
                 numbersGrid.appendChild(numberBox);
+                numberBoxes.push(numberBox); // Добавляем элемент в массив
             });
         }
-        
         // Выбор/снятие выбора числа
         function toggleNumberSelection(num, element) {
-            const index = selectedNumbers.indexOf(num);
-            
-            if (index === -1) {
-                // Добавляем число в выбранные
+            const numberBoxesWithNumber = numberBoxes.filter(box => box.dataset.number == num);
+            const isSelected = element.classList.contains('selected');
+
+            if (!isSelected) {
                 selectedNumbers.push(num);
                 element.classList.add('selected');
             } else {
-                // Удаляем число из выбранных
-                selectedNumbers.splice(index, 1);
-                element.classList.remove('selected');
+                let index = selectedNumbers.indexOf(num);
+                if (index > -1) {
+                    selectedNumbers.splice(index, 1);
+                    element.classList.remove('selected');
+                }
             }
-            
-            // Активируем/деактивируем кнопку проверки
             checkBtn.disabled = selectedNumbers.length === 0;
         }
-        
+
         // Проверка ответа
         function checkAnswer() {
             // Определяем, какие числа должны быть выбраны (все кроме последнего - это результат)
             const correctOptions = correctNumbers.slice(0, -1);
-            
-            // Создаем копии массивов для сравнения
             const selectedCopy = [...selectedNumbers].sort((a, b) => a - b);
             const correctCopy = [...correctOptions].sort((a, b) => a - b);
-            
-            // Проверяем совпадение массивов
+
             let isCorrect = selectedCopy.length === correctCopy.length;
-            
+
             if (isCorrect) {
+                const selectedCounts = {};
+                const correctCounts = {};
+
+                // Считаем количество каждого числа в массиве выбранных чисел
+                selectedNumbers.forEach(num => {
+                    selectedCounts[num] = (selectedCounts[num] || 0) + 1;
+                });
+
+                // Считаем количество каждого числа в массиве правильных чисел
+                correctOptions.forEach(num => {
+                    correctCounts[num] = (correctCounts[num] || 0) + 1;
+                });
+
+                // Сравниваем числа и их количество между selectedCounts и correctCounts
                 for (let i = 0; i < selectedCopy.length; i++) {
-                    if (selectedCopy[i] !== correctCopy[i]) {
+                    const num = selectedCopy[i];
+                    if (!correctCounts[num] || selectedCounts[num] !== correctCounts[num]) {
                         isCorrect = false;
                         break;
                     }
                 }
             }
-            
+
             // Добавляем попытку в историю
             addToHistory(selectedNumbers, isCorrect);
-            
+
             // Показываем результат
             if (isCorrect) {
                 showMessage('Поздравляем! Вы правильно выбрали числа!', 'success');
@@ -740,21 +756,21 @@
                 showMessage('Попробуйте еще раз!', 'failure');
             }
         }
-        
+
         // Добавление попытки в историю
         function addToHistory(numbers, isCorrect) {
             const attemptDiv = document.createElement('div');
             attemptDiv.className = 'attempt-history';
-            
+
             // Отображаем все выбранные числа, включая дубликаты
             const numbersHTML = numbers.map(num => `<span>${num}</span>`).join('');
-            
+
             attemptDiv.innerHTML = `
                 <div class="attempt-number">${gameHistory.length + 1}</div>
                 <div class="attempt-numbers">${numbersHTML}</div>
                 <div class="attempt-result">${isCorrect ? '✓ Верно' : '✗ Неверно'}</div>
             `;
-            
+
             historyContainer.prepend(attemptDiv);
             gameHistory.unshift({numbers: [...numbers], correct: isCorrect});
         }

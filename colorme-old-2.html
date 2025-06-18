@@ -295,8 +295,7 @@
         totalPairs: 0,
         canFlip: false,
         colors: [],
-        lastWrongColor: null,
-        foundColors: {} // Для отслеживания найденных карточек каждого цвета
+        lastWrongColor: null
     };
 
     // Цвета для карточек
@@ -335,8 +334,7 @@
             totalPairs: gameSettings.colors * gameSettings.cardsPerColor,
             canFlip: false,
             colors: availableColors.slice(0, gameSettings.colors),
-            lastWrongColor: null,
-            foundColors: {}
+            lastWrongColor: null
         };
         
         // Обновляем счетчики
@@ -424,15 +422,6 @@
             // Правильный выбор
             cardElement.classList.add('correct');
             gameState.foundPairs++;
-            
-            // Обновляем счетчик найденных карточек этого цвета
-            gameState.foundColors[cardColor] = (gameState.foundColors[cardColor] || 0) + 1;
-            
-            // Если все карточки этого цвета найдены, удаляем цвет из доступных
-            if (gameState.foundColors[cardColor] === gameSettings.cardsPerColor) {
-                gameState.colors = gameState.colors.filter(color => color !== cardColor);
-            }
-            
             updateStats();
             
             // Удаляем обработчик клика
@@ -457,7 +446,7 @@
             setTimeout(() => {
                 cardElement.classList.remove('flipped', 'incorrect');
                 
-                // Выбираем новый цвет (любой, кроме только что выбранного неверного и полностью найденных)
+                // Выбираем новый цвет (любой, кроме только что выбранного неверного)
                 const availableColors = gameState.colors.filter(color => color !== gameState.lastWrongColor);
                 if (availableColors.length > 0) {
                     gameState.currentColor = availableColors[Math.floor(Math.random() * availableColors.length)];
@@ -489,15 +478,13 @@
 
     // Бросок кубика
     function rollDice() {
-        // Фильтруем доступные цвета:
-        // 1. Исключаем полностью найденные цвета (они уже удалены из gameState.colors)
-        // 2. Исключаем последний неверный цвет, если он есть
+        // Фильтруем доступные цвета, исключая последний неверный
         const availableColors = gameState.lastWrongColor 
             ? gameState.colors.filter(color => color !== gameState.lastWrongColor)
             : gameState.colors;
         
         if (availableColors.length === 0) {
-            // Если все цвета исключены (маловероятно), используем все доступные
+            // Если все цвета исключены (маловероятно), используем все
             gameState.currentColor = gameState.colors[Math.floor(Math.random() * gameState.colors.length)];
         } else {
             const randomIndex = Math.floor(Math.random() * availableColors.length);
