@@ -318,23 +318,12 @@
         </a>
     </header>
     
-    <!-- Галерея игр с горизонтальным скроллом -->
-    <div class="games-gallery">
-        <button class="nav-btn prev-btn" onclick="scrollGallery(-1)">&#10094;</button>
-        <div class="games-container" id="gamesContainer">
-            <!-- Карточка игры 1 -->
-            <div class="game-card" onclick="window.location.href='podpod.html';">
-                <img src="3pod.webp" alt="3 под подозрением" class="game-image">
-                <h2 class="game-title">3 под подозрением</h2>
-                <p class="game-description">
-                    🎯 Цель игры: Угадайте скрытые смайлики за ограниченное число попыток.
-                    Развивайте логику и внимание в этой увлекательной игре!
-                </p>
-                <button class="play-btn">Играть</button>
-            </div>
-            
-            <!-- Карточка игры 2 -->
-            <div class="game-card" onclick="window.location.href='SmileGame.html';">
+    <!-- Галерея математических игр -->
+    <div class="games-gallery" style="margin-top:20px;">
+        <button class="nav-btn prev-btn" onclick="scrollGalleryMath(-1)">&#10094;</button>
+        <div class="games-container" id="gamesContainerMath">
+            <!-- Математика со смайликами -->
+            <div class="game-card" onclick="window.location.href='SmileGame2.html';">
                 <img src="sm1.jpg" alt="Математика со смайликами" class="game-image">
                 <h2 class="game-title">Математика со смайликами</h2>
                 <p class="game-description">
@@ -342,36 +331,7 @@
                 </p>
                 <button class="play-btn">Играть</button>
             </div>
-            <div class="game-card" onclick="window.location.href='math-pairs 2.html';">
-                <img src="fotonoticia_20180209194953_1200.jpg" alt="Математика со смайликами" class="game-image">
-                <h2 class="game-title">Математические пары</h2>
-                <p class="game-description">
-                    🎯 Цель игры: Найдите одинаковые пары выражений </br>  
-				 </p>
-				</br>
-                <button class="play-btn">Играть</button>
-            </div>
-            <!-- Карточка игры 3 -->
-            <div class="game-card" onclick="window.location.href='colorme.html';">
-                <img src="preview-xl.jpg" alt="Цветная память" class="game-image">
-                <h2 class="game-title">Цветная память</h2>
-                <p class="game-description">
-                    🎯 Цель игры: Раскройте все карточки нужного цвета. Отличный способ прокачать свою память!
-                </p>
-                <button class="play-btn">Играть</button>
-            </div>
-            <!-- Карточка игры 4a -->
-			 <div class="game-card" onclick="window.location.href='numb1.html';">
-                <img src="memorynumber.jpg" alt="Перемешанный пример" class="game-image">
-                <h2 class="game-title">Числовая память</h2>
-                <p class="game-description">
-                    🎯 Цель игры: Набери все числа подряд по памяти!
-					<br>
-					<br>
-                </p>
-                <button class="play-btn">Играть</button>
-            </div>
-            <!-- Карточка игры 4 -->
+            <!-- Перемешанный пример -->
             <div class="game-card" onclick="window.location.href='perem-primer 3.html';">
                 <img src="395390532.jpg" alt="Перемешанный пример" class="game-image">
                 <h2 class="game-title">Перемешанный пример</h2>
@@ -380,27 +340,27 @@
                 </p>
                 <button class="play-btn">Играть</button>
             </div>
-			
-            
-            <!-- Карточка игры 5 -->
-            <div class="game-card" onclick="window.location.href='Anagram.html';">
-                <img src="slova.jpg" alt="Анаграммы" class="game-image">
-                <h2 class="game-title">Анаграммы</h2>
+            <!-- Математические пары -->
+            <div class="game-card" onclick="window.location.href='math-pairs 2.html';">
+                <img src="fotonoticia_20180209194953_1200.jpg" alt="Математические пары" class="game-image">
+                <h2 class="game-title">Математические пары</h2>
                 <p class="game-description">
-                    🎯 Цель игры: Собери слова из букв. Отличный способ прокачать свою эрудицию!
-                </p>
+                    🎯 Цель игры: Найдите одинаковые пары выражений </br>  
+				 </p>
+				</br>
                 <button class="play-btn">Играть</button>
             </div>
-            <!-- Карточка игры 5 -->
-          <div class="game-card" onclick="window.location.href='sobr-slovo 4.html';">
-                <img src="slovo.jpg" alt="Анаграммы" class="game-image">
-                <h2 class="game-title">Собери слова</h2>
-              <p class="game-description">
-                🎯 Цель игры: Собери слова из слогов. <br> <br>
-             </p>
-              <button class="play-btn">Играть</button>
+            <!-- Много уравнений -->
+            <div class="game-card" onclick="window.location.href='MathQuiz.html';">
+                <img src="8577221.jpg" alt="Много уравнений" class="game-image">
+                <h2 class="game-title">Много уравнений</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Решите кучу сложных уравнений </br>  
+				 </p>
+				</br>
+                <button class="play-btn">Играть</button>
             </div>
-            <!-- Карточка игры 6 -->
+            <!-- Угадай число -->
             <div class="game-card" onclick="window.location.href='UgadChislo.html';">
                 <img src="quest.jpg" alt="Угадай число" class="game-image">
                 <h2 class="game-title">Угадай число</h2>
@@ -409,30 +369,7 @@
                 </p>
                 <button class="play-btn">Играть</button>
             </div>
-            
-            <!-- Карточка игры 7 -->
-            <div class="game-card" onclick="window.location.href='basche.html';">
-                <img src="bs1.jpg" alt="Баше" class="game-image">
-                <h2 class="game-title">Баше</h2>
-                <p class="game-description">
-                    🎯 Цель игры: Забрать последний камень и победить! Развивайте логику и стратегическое мышление в этой классической игре!
-                </p>
-                <button class="play-btn">Играть</button>
-            </div>
-            
-            <!-- Карточка игры 8 -->
-            <div class="game-card" onclick="window.location.href='https://www.friv4school.com/z/games/colorme/game.html';">
-                <img src="c1.png" alt="Color Me" class="game-image">
-                <h2 class="game-title">Color Me</h2>
-                <p class="game-description">
-                    🎯 Цель игры: Заполнить цветами по рисунку
-					
-                </p>
-				<br>
-                <button class="play-btn">Играть</button>
-            </div>
-                                   
-            <!-- Карточка игры 9 -->
+            <!-- Посчитай в куче -->
             <div class="game-card" onclick="window.location.href='https://matheasily.com/brain-teasers.html';">
                 <img src="700-nw1.jpg" alt="Посчитай в куче" class="game-image">
                 <h2 class="game-title">Посчитай в куче</h2>
@@ -442,7 +379,104 @@
                 <button class="play-btn">Играть</button>
             </div>
         </div>
-        <button class="nav-btn next-btn" onclick="scrollGallery(1)">&#10095;</button>
+        <button class="nav-btn next-btn" onclick="scrollGalleryMath(1)">&#10095;</button>
+    </div>
+
+    <!-- Галерея остальных игр -->
+    <div class="games-gallery" style="margin-top:10px;">
+        <button class="nav-btn prev-btn" onclick="scrollGalleryOther(-1)">&#10094;</button>
+        <div class="games-container" id="gamesContainerOther">
+            <!-- 3 под подозрением -->
+            <div class="game-card" onclick="window.location.href='podpod.html';">
+                <img src="3pod.webp" alt="3 под подозрением" class="game-image">
+                <h2 class="game-title">3 под подозрением</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Угадайте скрытые смайлики за ограниченное число попыток.
+                    Развивайте логику и внимание в этой увлекательной игре!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Цветная память -->
+            <div class="game-card" onclick="window.location.href='colorme.html';">
+                <img src="preview-xl.jpg" alt="Цветная память" class="game-image">
+                <h2 class="game-title">Цветная память</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Раскройте все карточки нужного цвета. Отличный способ прокачать свою память!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Числовая память -->
+            <div class="game-card" onclick="window.location.href='numb1.html';">
+                <img src="memorynumber.jpg" alt="Числовая память" class="game-image">
+                <h2 class="game-title">Числовая память</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Набери все числа подряд по памяти!
+					<br>
+					<br>
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+			<!-- Пазловые квадраты -->
+            <div class="game-card" onclick="window.location.href='PuzzleTrainer.html';">
+                <img src="009ba540_5d02_11e9_ab0a_005056a41668_f177dc15_6fc9_11e9_b069_005056a41668.jpeg" alt="Числовая память" class="game-image">
+                <h2 class="game-title">Пазловые квадраты</h2>
+                <p class="game-description">
+                    🎯 Цель игры: найди недостающую часть квадрата!
+					<br>
+					<br>
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+			<!-- Квадратные выражения -->
+            <div class="game-card" onclick="window.location.href='SquareMathTrainer.html';">
+                <img src="H6222dfd4cd2b4f9998f897e5b5cc4f2bF.webp" alt="Числовая память" class="game-image">
+                <h2 class="game-title">Квадратные выражения</h2>
+                <p class="game-description">
+                    🎯 Цель игры: найди правильный пазл после операций над ним!
+					<br>
+					<br>
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Анаграммы -->
+            <div class="game-card" onclick="window.location.href='Anagram.html';">
+                <img src="slova.jpg" alt="Анаграммы" class="game-image">
+                <h2 class="game-title">Анаграммы</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Собери слова из букв. Отличный способ прокачать свою эрудицию!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Собери слова -->
+            <div class="game-card" onclick="window.location.href='sobr-slovo 4.html';">
+                <img src="slovo.jpg" alt="Собери слова" class="game-image">
+                <h2 class="game-title">Собери слова</h2>
+              <p class="game-description">
+                🎯 Цель игры: Собери слова из слогов. <br> <br>
+             </p>
+              <button class="play-btn">Играть</button>
+            </div>
+            <!-- Баше -->
+            <div class="game-card" onclick="window.location.href='basche.html';">
+                <img src="bs1.jpg" alt="Баше" class="game-image">
+                <h2 class="game-title">Баше</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Забрать последний камень и победить! Развивайте логику и стратегическое мышление в этой классической игре!
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Color Me -->
+            <div class="game-card" onclick="window.location.href='https://www.friv4school.com/z/games/colorme/game.html';">
+                <img src="c1.png" alt="Color Me" class="game-image">
+                <h2 class="game-title">Color Me</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Заполнить цветами по рисунку
+                </p>
+				<br>
+                <button class="play-btn">Играть</button>
+            </div>
+        </div>
+        <button class="nav-btn next-btn" onclick="scrollGalleryOther(1)">&#10095;</button>
     </div>
 
     <script>
@@ -491,11 +525,20 @@
             decorations.appendChild(rect);
         }
         
-        // Функция для прокрутки галереи
-        function scrollGallery(direction) {
-            const container = document.getElementById('gamesContainer');
-            const scrollAmount = 700; // Количество пикселей для прокрутки
-            
+        // Функция для прокрутки математической галереи
+        function scrollGalleryMath(direction) {
+            const container = document.getElementById('gamesContainerMath');
+            const scrollAmount = 700;
+            if (direction === -1) {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+        // Функция для прокрутки галереи остальных игр
+        function scrollGalleryOther(direction) {
+            const container = document.getElementById('gamesContainerOther');
+            const scrollAmount = 700;
             if (direction === -1) {
                 container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
             } else {

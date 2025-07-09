@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пазловые квадраты — тренажёр</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.1)), url('f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(110,142,251,0.8), rgba(167,119,227,0.3));
+            z-index: -1;
+        }
+        .trainer-container {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 30px 40px 40px 40px;
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .trainer-title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        .trainer-settings {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .trainer-settings label {
+            font-size: 1em;
+            margin-right: 8px;
+        }
+        .trainer-settings input[type="color"] {
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        .trainer-settings input[type="range"] {
+            vertical-align: middle;
+        }
+        .puzzle-area {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+            width: 900px;
+            min-height: 600px;
+        }
+        .puzzle-column {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            z-index: 2;
+        }
+        .puzzle-block {
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px 0 rgba(31,38,135,0.15);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            min-width: 120px;
+            min-height: 120px;
+            position: relative;
+        }
+        .mini-grid {
+            display: grid;
+            gap: 2px;
+            background: none;
+        }
+        .dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2.5px solid #222;
+            margin-left: 12px;
+            margin-right: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            transition: box-shadow 0.2s;
+            z-index: 3;
+        }
+        .dot.selected {
+            box-shadow: 0 0 0 4px #00c6ff99;
+        }
+        .svg-lines {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @media (max-width: 1000px) {
+            .puzzle-area { width: 100vw; min-width: 0; }
+        }
+        @media (max-width: 700px) {
+            .trainer-container { padding: 10px; }
+            .puzzle-area { flex-direction: column; align-items: center; width: 100vw; }
+            .puzzle-column { flex-direction: row; gap: 10px; }
+        }
+		.back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="trainer-container">
+        <div class="trainer-title">Пазловые квадраты <a href="index.html" class="back-button">←</a></div>
+        <div class="trainer-settings">
+            <label>Размер сетки:
+                <select id="gridSize">
+                    <option value="3">3 x 3</option>
+                    <option value="4">4 x 4</option>
+                </select>
+            </label>
+            <label>Цвет квадратиков:
+                <input type="color" id="cellColor" value="#ff2222">
+            </label>
+            <label>Цвет фона:
+                <input type="color" id="bgColor" value="#ffffff">
+            </label>
+            <label>Число недостающих:
+                <input type="range" id="missingCount" min="3" max="4" value="3">
+                <span id="missingCountValue">3</span>
+            </label>
+            <button id="restartBtn" style="background:linear-gradient(to right,#00c6ff,#0072ff);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px #00c6ff44;">Перезапустить</button>
+        </div>
+        <div class="puzzle-area" id="puzzleArea">
+            <svg class="svg-lines" id="svgLines"></svg>
+            <div class="puzzle-column" id="leftColumn"></div>
+            <div style="width:60px;"></div>
+            <div class="puzzle-column" id="rightColumn"></div>
+        </div>
+    </div>
+    <script>
+    // --- Константы и переменные ---
+    const leftColumn = document.getElementById('leftColumn');
+    const rightColumn = document.getElementById('rightColumn');
+    const svgLines = document.getElementById('svgLines');
+    const gridSizeSelect = document.getElementById('gridSize');
+    const cellColorInput = document.getElementById('cellColor');
+    const bgColorInput = document.getElementById('bgColor');
+    const missingCountInput = document.getElementById('missingCount');
+    const missingCountValue = document.getElementById('missingCountValue');
+    const restartBtn = document.getElementById('restartBtn');
+    const puzzleArea = document.getElementById('puzzleArea');
+
+    let gridSize = 3;
+    let missingMin = 3, missingMax = 4;
+    let missingCount = 3;
+    let cellColor = '#ff2222';
+    let bgColor = '#ffffff';
+    let pairs = [];
+    let leftDots = [], rightDots = [];
+    let selectedLeft = null, selectedRight = null;
+    let lines = [];
+    let lock = false;
+
+    // --- Вспомогательные функции ---
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+    function rotateMatrix(matrix, times) {
+        let res = matrix;
+        for (let t = 0; t < times; t++) {
+            res = res[0].map((_, i) => res.map(row => row[i]).reverse());
+        }
+        return res;
+    }
+    function getCellSize() {
+        return gridSize === 3 ? 28 : 20;
+    }
+    // --- Генерация пазлов ---
+    function generatePairs() {
+        pairs = [];
+        for (let i = 0; i < 8; i++) {
+            let full = Array.from({length: gridSize}, () => Array(gridSize).fill(1));
+            let allCells = [];
+            for (let y = 0; y < gridSize; y++) for (let x = 0; x < gridSize; x++) allCells.push([y, x]);
+            shuffle(allCells);
+            let missing = allCells.slice(0, missingCount);
+            let left = full.map(row => row.slice());
+            missing.forEach(([y, x]) => left[y][x] = 0);
+            let right = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
+            missing.forEach(([y, x]) => right[y][x] = 1);
+            let rot = Math.floor(Math.random() * 4);
+            let rightRot = rotateMatrix(right, rot);
+            pairs.push({left, right: rightRot, rightOrig: right, rot, idx: i});
+        }
+        // Перемешиваем порядок для отображения
+        window.leftOrder = shuffle([...Array(8).keys()]);
+        window.rightOrder = shuffle([...Array(8).keys()]);
+    }
+    // --- Отрисовка пазлов ---
+    function renderPuzzles() {
+        leftColumn.innerHTML = '';
+        rightColumn.innerHTML = '';
+        leftDots = [];
+        rightDots = [];
+        svgLines.innerHTML = '';
+        svgLines.setAttribute('width', puzzleArea.offsetWidth);
+        svgLines.setAttribute('height', puzzleArea.offsetHeight);
+        // Левый столбец (точка справа)
+        window.leftOrder.forEach((i) => {
+            const pair = pairs[i];
+            const block = document.createElement('div');
+            block.className = 'puzzle-block';
+            const grid = createMiniGrid(pair.left, cellColor, bgColor);
+            block.appendChild(grid);
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.dataset.index = i;
+            dot.onclick = () => selectDot('left', i);
+            block.appendChild(dot);
+            leftColumn.appendChild(block);
+            leftDots[i] = dot;
+        });
+        // Правый столбец (точка слева)
+        window.rightOrder.forEach((i) => {
+            const pair = pairs[i];
+            const block = document.createElement('div');
+            block.className = 'puzzle-block';
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.dataset.index = i;
+            dot.onclick = () => selectDot('right', i);
+            block.appendChild(dot);
+            const grid = createMiniGrid(pair.right, cellColor, bgColor);
+            block.appendChild(grid);
+            rightColumn.appendChild(block);
+            rightDots[i] = dot;
+        });
+        setTimeout(updateSVGPositions, 100);
+    }
+    // --- Создание мини-сетки ---
+    function createMiniGrid(matrix, color, bg) {
+        const size = getCellSize();
+        const grid = document.createElement('div');
+        grid.className = 'mini-grid';
+        grid.style.gridTemplateRows = `repeat(${gridSize}, ${size}px)`;
+        grid.style.gridTemplateColumns = `repeat(${gridSize}, ${size}px)`;
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                const cell = document.createElement('div');
+                cell.style.width = size + 'px';
+                cell.style.height = size + 'px';
+                cell.style.borderRadius = '4px';
+                cell.style.background = matrix[y][x] ? color : bg;
+                cell.style.border = '1.5px solid #222';
+                grid.appendChild(cell);
+            }
+        }
+        return grid;
+    }
+    // --- Обработка выбора точек и соединения ---
+    function selectDot(side, idx) {
+        if (lock) return;
+        if (side === 'left') {
+            if (selectedLeft === idx) { selectedLeft = null; leftDots[idx].classList.remove('selected'); return; }
+            if (selectedLeft !== null) leftDots[selectedLeft].classList.remove('selected');
+            selectedLeft = idx;
+            leftDots[idx].classList.add('selected');
+        } else {
+            if (selectedRight === idx) { selectedRight = null; rightDots[idx].classList.remove('selected'); return; }
+            if (selectedRight !== null) rightDots[selectedRight].classList.remove('selected');
+            selectedRight = idx;
+            rightDots[idx].classList.add('selected');
+        }
+        if (selectedLeft !== null && selectedRight !== null) {
+            connectDots(selectedLeft, selectedRight);
+        }
+    }
+    // --- Соединение точек линией ---
+    function connectDots(leftIdx, rightIdx) {
+        // Получаем координаты точек относительно svg
+        const leftRect = leftDots[leftIdx].getBoundingClientRect();
+        const rightRect = rightDots[rightIdx].getBoundingClientRect();
+        const svgRect = svgLines.getBoundingClientRect();
+        const x1 = leftRect.left + leftRect.width/2 - svgRect.left;
+        const y1 = leftRect.top + leftRect.height/2 - svgRect.top;
+        const x2 = rightRect.left + rightRect.width/2 - svgRect.left;
+        const y2 = rightRect.top + rightRect.height/2 - svgRect.top;
+        // Проверка правильности
+        const isCorrect = leftIdx === rightIdx;
+        drawLine(x1, y1, x2, y2, isCorrect);
+        // Сброс выделения
+        leftDots[leftIdx].classList.remove('selected');
+        rightDots[rightIdx].classList.remove('selected');
+        selectedLeft = null;
+        selectedRight = null;
+        if (isCorrect) {
+            leftDots[leftIdx].style.pointerEvents = 'none';
+            rightDots[rightIdx].style.pointerEvents = 'none';
+        }
+    }
+    // --- Рисование линии ---
+    function drawLine(x1, y1, x2, y2, isCorrect) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke-width', 4);
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('stroke', isCorrect ? '#2ecc40' : '#e74c3c');
+        line.setAttribute('opacity', isCorrect ? '1' : '1');
+        svgLines.appendChild(line);
+        if (isCorrect) {
+            lines.push(line);
+        } else {
+            lock = true;
+            setTimeout(() => {
+                line.remove();
+                lock = false;
+            }, 2000);
+        }
+    }
+    // --- Обновление позиций SVG-линий при изменении размера ---
+    function updateSVGPositions() {
+        svgLines.innerHTML = '';
+        svgLines.setAttribute('width', puzzleArea.offsetWidth);
+        svgLines.setAttribute('height', puzzleArea.offsetHeight);
+        // Перерисовать все правильные линии
+        lines.forEach((line, idx) => {
+            const leftRect = leftDots[idx].getBoundingClientRect();
+            const rightRect = rightDots[idx].getBoundingClientRect();
+            const svgRect = svgLines.getBoundingClientRect();
+            const x1 = leftRect.left + leftRect.width/2 - svgRect.left;
+            const y1 = leftRect.top + leftRect.height/2 - svgRect.top;
+            const x2 = rightRect.left + rightRect.width/2 - svgRect.left;
+            const y2 = rightRect.top + rightRect.height/2 - svgRect.top;
+            const newLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+            newLine.setAttribute('x1', x1);
+            newLine.setAttribute('y1', y1);
+            newLine.setAttribute('x2', x2);
+            newLine.setAttribute('y2', y2);
+            newLine.setAttribute('stroke-width', 4);
+            newLine.setAttribute('stroke-linecap', 'round');
+            newLine.setAttribute('stroke', '#2ecc40');
+            newLine.setAttribute('opacity', '1');
+            svgLines.appendChild(newLine);
+            lines[idx] = newLine;
+        });
+    }
+    window.addEventListener('resize', () => setTimeout(updateSVGPositions, 200));
+    // --- Обработка настроек ---
+    gridSizeSelect.onchange = function() {
+        gridSize = +this.value;
+        if (gridSize === 3) {
+            missingMin = 3; missingMax = 4;
+        } else {
+            missingMin = 4; missingMax = 8;
+        }
+        missingCountInput.min = missingMin;
+        missingCountInput.max = missingMax;
+        if (missingCount < missingMin) missingCount = missingMin;
+        if (missingCount > missingMax) missingCount = missingMax;
+        missingCountInput.value = missingCount;
+        missingCountValue.textContent = missingCount;
+        restart();
+    };
+    cellColorInput.oninput = function() {
+        cellColor = this.value;
+        renderPuzzles();
+        updateSVGPositions();
+    };
+    bgColorInput.oninput = function() {
+        bgColor = this.value;
+        renderPuzzles();
+        updateSVGPositions();
+    };
+    missingCountInput.oninput = function() {
+        missingCount = +this.value;
+        missingCountValue.textContent = missingCount;
+        restart();
+    };
+    restartBtn.onclick = restart;
+    // --- Перезапуск ---
+    function restart() {
+        lines = [];
+        selectedLeft = null;
+        selectedRight = null;
+        lock = false;
+        generatePairs();
+        renderPuzzles();
+    }
+    // --- Инициализация ---
+    restart();
+    </script>
+</body>
+</html> 

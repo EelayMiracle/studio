@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор примеров</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)), url('f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+        .game-container {
+            margin-top: 20px;
+            background-color: rgba(222, 158, 255, 0.85);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 20px;
+        }
+        .settings {
+            margin-bottom: 30px;
+            padding: 10px;
+            background-color: rgba(151, 135, 255, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        .settings h2 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        .setting-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .setting-group label {
+            color: #fff;
+            font-weight: bold;
+            min-width: 120px;
+            text-align: right;
+        }
+        input[type="number"] {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50px;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s;
+            outline: none;
+            width: 90px;
+            box-sizing: border-box;
+        }
+        input[type="number"]:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+        }
+        button[type="button"] {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+            min-width: 150px;
+            margin-bottom: 15px;
+        }
+        button[type="button"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        button[type="button"]:active {
+            transform: translateY(0);
+        }
+        .example-block {
+            margin: 25px 0 35px 0;
+            padding: 18px 10px 18px 10px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .example-equation {
+            font-size: 1.7em;
+            margin-bottom: 18px;
+            font-weight: bold;
+        }
+        .answers-row {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 10px;
+        }
+        .answer-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 1.5em;
+            background: #fff;
+            border: 2.5px solid #bdbdbd;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .answer-btn.correct {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+            color: #2e7d32;
+        }
+        .answer-btn.incorrect {
+            background: #ffebee;
+            border-color: #ef5350;
+            color: #c62828;
+        }
+        .answer-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        @media (max-width: 600px) {
+            .example-block { max-width: 98vw; }
+            .answers-row { gap: 8px; }
+            .answer-btn { width: 48px; height: 48px; font-size: 1.1em; }
+        }
+		.back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="settings" id="settings">
+		<h1>Генератор примеров <a href="index.html" class="back-button">←</a></h1>
+        <h2>Настройки диапазонов</h2>
+        <form id="settings-form">
+            <div class="setting-group">
+                <label>Сложение: a</label><input type="number" id="add_a_min" value="2" min="2" max="1000"> — <input type="number" id="add_a_max" value="20" min="2" max="1000">
+                <label>b</label><input type="number" id="add_b_min" value="2" min="2" max="1000"> — <input type="number" id="add_b_max" value="20" min="2" max="1000">
+            </div>
+            <div class="setting-group">
+                <label>Вычитание: a</label><input type="number" id="sub_a_min" value="2" min="2" max="1000"> — <input type="number" id="sub_a_max" value="20" min="2" max="1000">
+                <label>b</label><input type="number" id="sub_b_min" value="2" min="2" max="1000"> — <input type="number" id="sub_b_max" value="20" min="2" max="1000">
+            </div>
+            <div class="setting-group">
+                <label>Умножение: a</label><input type="number" id="mul_a_min" value="2" min="2" max="9"> — <input type="number" id="mul_a_max" value="9" min="2" max="9">
+                <label>b</label><input type="number" id="mul_b_min" value="2" min="2" max="9"> — <input type="number" id="mul_b_max" value="9" min="2" max="9">
+            </div>
+            <div class="setting-group">
+                <label>Деление: a</label>
+                <input type="number" id="div_a_min" value="2" min="2" max="1000"> 
+                — <input type="number" id="div_a_max" value="100" min="2" max="1000">
+                <label>b (делитель)</label><input type="number" id="div_b_min" value="2" min="2" max="9"> 
+                — <input type="number" id="div_b_max" value="9" min="2" max="9">
+          </div>
+            <button type="button" onclick="generateAllExamples()">Сгенерировать примеры</button>
+        </form>
+    </div>
+    <div class="game-container" id="examples-list"></div>
+    <script>
+// --- МОДЕЛИ ПРИМЕРОВ ---
+const MODELS = [
+    // 1
+    { variations: ["a + b × ❔ = c", "a + ❔ × b = c", "b × ❔ + a = c", "❔ × b + a = c"], type: "muladd" },
+    // 2
+    { variations: ["a - b × ❔ = c", "a - ❔ × b = c"], type: "mulsub" },
+    // 3
+    { variations: ["a × ❔ - b = c", "❔ × a - b = c"], type: "mulsub2" },
+    // 4
+    { variations: ["a + b/❔ = c", "b/❔ + a = c"], type: "adddiv1" },
+    // 5
+    { variations: ["a + ❔/b = c", "❔/b + a = c"], type: "adddiv2" },
+    // 6
+    { variations: ["a - b/❔ = c"], type: "subdiv1" },
+    // 7
+    { variations: ["a - ❔/b = c"], type: "subdiv2" },
+    // 8
+    { variations: ["a × b × ❔ = c"], type: "mul3" },
+    // 9
+    { variations: ["a × ❔ × b = c"], type: "mul3" },
+    // 10
+    { variations: ["❔ × a × b = c"], type: "mul3" },
+    // 11
+    { variations: ["(a + b) × ❔ = c", "❔ × (a + b) = c"], type: "sum_mul" },
+    // 12
+    { variations: ["(a + ❔) × b = c", "b × (a + ❔) = c"], type: "sum_mul2" },
+    // 13
+    { variations: ["(a - b) × ❔ = c", "❔ × (a - b) = c"], type: "diff_mul" },
+    // 14
+    { variations: ["(a × b + c) × ❔ = d", "(c + a × b) × ❔ = d", "❔ × (a × b + c) = d", "❔ × (c + a × b) = d"], type: "muladd_mul" },
+    // 15
+    { variations: ["(a × b - c) × ❔ = d", "❔ × (a × b - c) = d"], type: "mulsub_mul" },
+    // 16
+    { variations: ["(c - a × b) × ❔ = d"], type: "mulsub_mul2" },
+    // 17
+    { variations: ["(a × b + c) / ❔ = d", "(c + a × b) / ❔ = d"], type: "muladd_div" },
+    // 18
+    { variations: ["(a × b - c) / ❔ = d"], type: "mulsub_div" },
+    // 19
+    { variations: ["(c - a × b) / ❔ = d"], type: "mulsub_div2" },
+];
+
+// --- НАСТРОЙКИ ---
+function getSettings() {
+    return {
+        add_a: [parseInt(document.getElementById('add_a_min').value), parseInt(document.getElementById('add_a_max').value)],
+        add_b: [parseInt(document.getElementById('add_b_min').value), parseInt(document.getElementById('add_b_max').value)],
+        sub_a: [parseInt(document.getElementById('sub_a_min').value), parseInt(document.getElementById('sub_a_max').value)],
+        sub_b: [parseInt(document.getElementById('sub_b_min').value), parseInt(document.getElementById('sub_b_max').value)],
+        mul_a: [parseInt(document.getElementById('mul_a_min').value), parseInt(document.getElementById('mul_a_max').value)],
+        mul_b: [parseInt(document.getElementById('mul_b_min').value), parseInt(document.getElementById('mul_b_max').value)],
+        div_a: [parseInt(document.getElementById('div_a_min').value), parseInt(document.getElementById('div_a_max').value)],
+        div_b: [parseInt(document.getElementById('div_b_min').value), parseInt(document.getElementById('div_b_max').value)],
+    };
+}
+
+// --- ГЕНЕРАЦИЯ ВСЕХ ПРИМЕРОВ ---
+function generateAllExamples() {
+    const settings = getSettings();
+    const container = document.getElementById('examples-list');
+    container.innerHTML = '';
+    for (let i = 0; i < MODELS.length; i++) {
+        const model = MODELS[i];
+        const variation = model.variations[Math.floor(Math.random() * model.variations.length)];
+        const example = generateExample(model.type, variation, settings);
+        container.appendChild(example);
+    }
+}
+
+// --- ГЕНЕРАЦИЯ ОДНОГО ПРИМЕРА ---
+function generateExample(type, variation, settings) {
+    // Генерируем числа a, b, c, d в зависимости от типа
+    let a, b, c, d, answer, answers = [];
+    let unknownPos = variation.indexOf('❔');
+    // Генерация по типу
+    let valid = false;
+    while (!valid) {
+        valid = true;
+        switch(type) {
+            case 'muladd':
+                a = randInt(Math.max(1, settings.add_a[0]), Math.max(1, settings.add_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                c = a + b * answer;
+                break;
+            case 'mulsub':
+                a = randInt(Math.max(1, settings.sub_a[0]), Math.max(1, settings.sub_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                c = a - b * answer;
+                if (c <= 0) valid = false;
+                break;
+            case 'mulsub2':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.sub_b[0]), Math.max(1, settings.sub_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                c = a * answer - b;
+                if (c <= 0) valid = false;
+                break;
+            case 'adddiv1':
+                a = randInt(Math.max(1, settings.add_a[0]), Math.max(1, settings.add_a[1]));
+                b = randInt(Math.max(1, settings.div_a[0]), Math.max(1, settings.div_a[1]));
+                answer = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                if (answer === 0) { valid = false; break; }
+                c = a + Math.floor(b / answer);
+                if (b % answer !== 0 || c <= 0) valid = false;
+                break;
+            case 'adddiv2':
+                a = randInt(Math.max(1, settings.add_a[0]), Math.max(1, settings.add_a[1]));
+                b = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                answer = randInt(Math.max(1, settings.div_a[0]), Math.max(1, settings.div_a[1]));
+                if (b === 0) { valid = false; break; }
+                c = a + Math.floor(answer / b);
+                if (answer % b !== 0 || c <= 0) valid = false;
+                break;
+            case 'subdiv1':
+                a = randInt(Math.max(1, settings.sub_a[0]), Math.max(1, settings.sub_a[1]));
+                b = randInt(Math.max(1, settings.div_a[0]), Math.max(1, settings.div_a[1]));
+                answer = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                if (answer === 0) { valid = false; break; }
+                c = a - Math.floor(b / answer);
+                if (b % answer !== 0 || c <= 0) valid = false;
+                break;
+            case 'subdiv2':
+                a = randInt(Math.max(1, settings.sub_a[0]), Math.max(1, settings.sub_a[1]));
+                b = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                answer = randInt(Math.max(1, settings.div_a[0]), Math.max(1, settings.div_a[1]));
+                if (b === 0) { valid = false; break; }
+                c = a - Math.floor(answer / b);
+                if (answer % b !== 0 || c <= 0) valid = false;
+                break;
+            case 'mul3':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                c = a * b * answer;
+                if (c <= 0) valid = false;
+                break;
+            case 'sum_mul':
+                a = randInt(Math.max(1, settings.add_a[0]), Math.max(1, settings.add_a[1]));
+                b = randInt(Math.max(1, settings.add_b[0]), Math.max(1, settings.add_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                c = (a + b) * answer;
+                if (c <= 0) valid = false;
+                break;
+            case 'sum_mul2':
+                a = randInt(Math.max(1, settings.add_a[0]), Math.max(1, settings.add_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                answer = randInt(Math.max(1, settings.add_b[0]), Math.max(1, settings.add_b[1]));
+                c = (a + answer) * b;
+                if (c <= 0) valid = false;
+                break;
+            case 'diff_mul':
+                a = randInt(Math.max(1, settings.sub_a[0]), Math.max(1, settings.sub_a[1]));
+                b = randInt(Math.max(1, settings.sub_b[0]), Math.max(1, settings.sub_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                if (a - b <= 0) { valid = false; break; }
+                c = (a - b) * answer;
+                if (c <= 0) valid = false;
+                break;
+            case 'muladd_mul':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                c = randInt(Math.max(1, settings.add_b[0]), Math.max(1, settings.add_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                d = (a * b + c) * answer;
+                if (d <= 0) valid = false;
+                break;
+            case 'mulsub_mul':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                c = randInt(Math.max(1, settings.sub_b[0]), Math.max(1, settings.sub_b[1]));
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                if (a * b - c <= 0) { valid = false; break; }
+                d = (a * b - c) * answer;
+                if (d <= 0) valid = false;
+                break;
+            case 'mulsub_mul2':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                c = randInt(Math.max(1, settings.sub_a[0]), Math.max(1, settings.sub_a[1]));
+                if (c - a * b <= 0) { valid = false; break; }
+                answer = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                d = (c - a * b) * answer;
+                if (d <= 0) valid = false;
+                break;
+            case 'muladd_div':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                c = randInt(Math.max(1, settings.add_b[0]), Math.max(1, settings.add_b[1]));
+                answer = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                if (answer === 0) { valid = false; break; }
+                if ((a * b + c) % answer !== 0) { valid = false; break; }
+                d = (a * b + c) / answer;
+                if (d <= 0 || !Number.isInteger(d)) valid = false;
+                break;
+            case 'mulsub_div':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                c = randInt(Math.max(1, settings.sub_b[0]), Math.max(1, settings.sub_b[1]));
+                answer = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                if (answer === 0) { valid = false; break; }
+                if ((a * b - c) % answer !== 0 || a * b - c <= 0) { valid = false; break; }
+                d = (a * b - c) / answer;
+                if (d <= 0 || !Number.isInteger(d)) valid = false;
+                break;
+            case 'mulsub_div2':
+                a = randInt(Math.max(1, settings.mul_a[0]), Math.max(1, settings.mul_a[1]));
+                b = randInt(Math.max(1, settings.mul_b[0]), Math.max(1, settings.mul_b[1]));
+                c = randInt(Math.max(1, settings.sub_a[0]), Math.max(1, settings.sub_a[1]));
+                answer = randInt(Math.max(1, settings.div_b[0]), Math.max(1, settings.div_b[1]));
+                if (answer === 0) { valid = false; break; }
+                if ((c - a * b) % answer !== 0 || c - a * b <= 0) { valid = false; break; }
+                d = (c - a * b) / answer;
+                if (d <= 0 || !Number.isInteger(d)) valid = false;
+                break;
+        }
+        // Проверяем, что все числа положительные и целые
+        if ([a, b, c, d, answer].some(x => typeof x !== 'undefined' && (!Number.isInteger(x) || x <= 0))) valid = false;
+    }
+    // Формируем строку примера
+    let eq = variation
+        .replace(/a/g, a)
+        .replace(/b/g, b)
+        .replace(/c/g, typeof c !== 'undefined' ? c : '')
+        .replace(/d/g, typeof d !== 'undefined' ? d : '')
+        .replace(/\//g, ' ÷ ');
+    // Варианты ответов
+    answers = [answer];
+    while (answers.length < 5) {
+        let fake = answer + randInt(-7, 7);
+        if (fake === answer || fake <= 0 || !Number.isInteger(fake) || answers.includes(fake)) continue;
+        answers.push(fake);
+    }
+    answers = shuffle(answers);
+    // Создаем DOM
+    const block = document.createElement('div');
+    block.className = 'example-block';
+    const eqDiv = document.createElement('div');
+    eqDiv.className = 'example-equation';
+    eqDiv.textContent = eq;
+    block.appendChild(eqDiv);
+    const ansRow = document.createElement('div');
+    ansRow.className = 'answers-row';
+    answers.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = val;
+        btn.onclick = function() {
+            if (btn.disabled) return;
+            if (val === answer) {
+                btn.classList.add('correct');
+                ansRow.querySelectorAll('button').forEach(b => b.disabled = true);
+            } else {
+                btn.classList.add('incorrect');
+                btn.disabled = true;
+            }
+        };
+        ansRow.appendChild(btn);
+    });
+    block.appendChild(ansRow);
+    return block;
+}
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function shuffle(arr) {
+    let a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+// --- ПЕРВИЧНАЯ ГЕНЕРАЦИЯ ---
+generateAllExamples();
+    </script>
+</body>
+</html> 
