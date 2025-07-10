@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Числовое поле — игра на размещение</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.1)), url('f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(110,142,251,0.8), rgba(167,119,227,0.3));
+            z-index: -1;
+        }
+        .game-container {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 30px 40px 40px 40px;
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .game-title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        .game-settings {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .game-settings label {
+            font-size: 1em;
+            margin-right: 8px;
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            position: relative;
+            width: 700px;
+            min-height: 500px;
+        }
+        .number-cell {
+            background: rgba(255,255,255,0.85);
+            color: #222;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(31,38,135,0.10);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            font-size: 1.2em;
+            font-weight: bold;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+        }
+        .edge-circle {
+            background: linear-gradient(135deg, #00c6ff 60%, #a777e3 100%);
+            color: #fff;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(31,38,135,0.10);
+            border: 2px solid #fff;
+            margin: 0 auto;
+            cursor: grab;
+            user-select: none;
+        }
+        .edge-circle.empty {
+            background: none;
+            border: none;
+            box-shadow: none;
+            cursor: default;
+        }
+        .grid-container {
+            display: grid;
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px 0 rgba(31,38,135,0.15);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px;
+            gap: 6px;
+            margin: 0 18px;
+        }
+        .grid-cell {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 8px;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            color: #222;
+            font-weight: bold;
+            position: relative;
+            transition: background 0.2s;
+        }
+        .grid-cell.cell-error {
+            background: #ffb3b3 !important;
+            border-color: #ff5555 !important;
+        }
+        .grid-area-wrapper {
+            display: grid;
+            margin: 0 auto;
+            display: block;
+        }
+        @media (max-width: 900px) {
+            .game-area { width: 100vw; min-width: 0; }
+        }
+        @media (max-width: 700px) {
+            .game-container { padding: 10px; }
+            .game-area { flex-direction: column; align-items: center; width: 100vw; }
+        }
+		.back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-title">Числовое поле <a href="index.html" class="back-button">←</a></div>
+        <div class="game-settings">
+            <label>Размер поля:
+                <select id="gridSize">
+                    <option value="4">4 x 4</option>
+                    <option value="3">3 x 3</option>
+                </select>
+            </label>
+            <button id="resetBtn" title="Сбросить" style="background:rgba(255,255,255,0.7);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.3em;cursor:pointer;box-shadow:0 2px 8px #00c6ff33;margin-left:10px;">
+                <span style="display:inline-block;transform:rotate(-45deg);">&#8635;</span>
+            </button>
+            <button id="newGameBtn" title="Новая игра" style="background:linear-gradient(135deg,#00c6ff,#a777e3);color:#fff;border:none;border-radius:8px;padding:0 18px;height:38px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px #00c6ff44;margin-left:10px;">Новая игра</button>
+            <button id="showAnswerBtn" title="Показать ответ" style="background:linear-gradient(135deg,#00c6ff,#a777e3);color:#fff;border:none;border-radius:8px;padding:0 18px;height:38px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px #00c6ff44;margin-left:10px;">Показать ответ</button>
+        </div>
+        <div class="game-area">
+            <div class="grid-area-wrapper" id="gridAreaWrapper" style="position:relative; display:inline-block;"></div>
+            <div id="answerWrapper" style="margin-top:32px;display:none;"></div>
+        </div>
+    </div>
+    <script>
+    // --- Переменные ---
+    const gridSizeSelect = document.getElementById('gridSize');
+    const gridContainer = document.getElementById('gridContainer');
+    const topNumbers = document.getElementById('topNumbers');
+    const bottomNumbers = document.getElementById('bottomNumbers');
+    const leftNumbers = document.getElementById('leftNumbers');
+    const rightNumbers = document.getElementById('rightNumbers');
+
+    // Для линий
+    let svgLines = null;
+    const gridAreaWrapper = () => document.querySelector('.grid-area-wrapper');
+
+    let gridSize = 4;
+    let gridState = [];
+    let numberRange = [];
+
+    function createSVG() {
+        if (svgLines) svgLines.remove();
+        svgLines = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgLines.classList.add('svg-lines');
+        svgLines.style.position = 'absolute';
+        svgLines.style.left = '0';
+        svgLines.style.top = '0';
+        svgLines.style.width = '100%';
+        svgLines.style.height = '100%';
+        svgLines.style.pointerEvents = 'none';
+        const wrapper = gridAreaWrapper();
+        if (wrapper) wrapper.appendChild(svgLines);
+    }
+
+    // --- Генерация змейки и расстановка по краям ---
+    function generateSnake(gridSize) {
+        // Алгоритм: случайно стартуем, идём по соседям, пока не разместим все числа
+        const N = gridSize * gridSize;
+        const dirs = [
+            [-1, 0], [1, 0], [0, -1], [0, 1], // вверх, вниз, влево, вправо
+            [-1, -1], [-1, 1], [1, -1], [1, 1] // диагонали
+        ];
+        let grid = Array.from({length: gridSize}, () => Array(gridSize).fill(null));
+        let path = [];
+        let used = Array.from({length: gridSize}, () => Array(gridSize).fill(false));
+        // Случайная стартовая клетка
+        let r = Math.floor(Math.random() * gridSize);
+        let c = Math.floor(Math.random() * gridSize);
+        grid[r][c] = 1;
+        path.push([r, c]);
+        used[r][c] = true;
+        let currNum = 2;
+        while (currNum <= N) {
+            // Найти всех соседей, куда можно пойти
+            let neighbors = [];
+            for (const [dr, dc] of dirs) {
+                let nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize && !used[nr][nc]) {
+                    neighbors.push([nr, nc]);
+                }
+            }
+            if (neighbors.length === 0) {
+                // Не удалось построить змейку — пробуем заново
+                return generateSnake(gridSize);
+            }
+            // Случайный сосед
+            const [nr, nc] = neighbors[Math.floor(Math.random() * neighbors.length)];
+            grid[nr][nc] = currNum;
+            path.push([nr, nc]);
+            used[nr][nc] = true;
+            r = nr; c = nc;
+            currNum++;
+        }
+        return {grid, path};
+    }
+
+    // Расставить числа по краям
+    function placeNumbersOnEdges(snakePath, gridSize) {
+        // Для каждого числа определяем строку и столбец
+        // Случайно выбираем: край строки (слева/справа) или край столбца (сверху/снизу)
+        const N = gridSize * gridSize;
+        let edgeNumbers = {top: Array(gridSize).fill(null), bottom: Array(gridSize).fill(null), left: Array(gridSize).fill(null), right: Array(gridSize).fill(null)};
+        for (let num = 1; num <= N; num++) {
+            const [r, c] = snakePath[num-1];
+            // Случайный порядок попыток: [left, right, top, bottom]
+            let positions = [
+                {side: 'left', idx: r},
+                {side: 'right', idx: r},
+                {side: 'top', idx: c},
+                {side: 'bottom', idx: c}
+            ];
+            // Перемешаем порядок
+            for (let i = positions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [positions[i], positions[j]] = [positions[j], positions[i]];
+            }
+            let placed = false;
+            for (const pos of positions) {
+                if (edgeNumbers[pos.side][pos.idx] === null) {
+                    edgeNumbers[pos.side][pos.idx] = num;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                // Если все четыре позиции заняты (маловероятно), перегенерируем змейку
+                return null;
+            }
+        }
+        return edgeNumbers;
+    }
+
+    // --- Модифицируем renderNumbers для поддержки новой логики ---
+    let currentEdgeNumbers = null;
+    function renderNumbersAndGrid() {
+        const wrapper = document.getElementById('gridAreaWrapper');
+        wrapper.innerHTML = '';
+        // Размер сетки: (gridSize+2) x (gridSize+2)
+        wrapper.style.display = 'grid';
+        wrapper.style.gridTemplateColumns = `repeat(${gridSize+2}, 48px)`;
+        wrapper.style.gridTemplateRows = `repeat(${gridSize+2}, 48px)`;
+        wrapper.style.background = 'none';
+        // Заполняем сетку
+        for (let r = 0; r < gridSize+2; r++) {
+            for (let c = 0; c < gridSize+2; c++) {
+                // Углы — пусто
+                if ((r === 0 || r === gridSize+1) && (c === 0 || c === gridSize+1)) {
+                    const empty = document.createElement('div');
+                    empty.className = 'edge-circle empty';
+                    wrapper.appendChild(empty);
+                    continue;
+                }
+                // Верхний край
+                if (r === 0 && c > 0 && c < gridSize+1) {
+                    const val = currentEdgeNumbers.top[c-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'top');
+                    el.setAttribute('data-idx', c-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                        makeDraggable(el);
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Нижний край
+                if (r === gridSize+1 && c > 0 && c < gridSize+1) {
+                    const val = currentEdgeNumbers.bottom[c-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'bottom');
+                    el.setAttribute('data-idx', c-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                        makeDraggable(el);
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Левый край
+                if (c === 0 && r > 0 && r < gridSize+1) {
+                    const val = currentEdgeNumbers.left[r-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'left');
+                    el.setAttribute('data-idx', r-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                        makeDraggable(el);
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Правый край
+                if (c === gridSize+1 && r > 0 && r < gridSize+1) {
+                    const val = currentEdgeNumbers.right[r-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'right');
+                    el.setAttribute('data-idx', r-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                        makeDraggable(el);
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Внутри — клетка поля
+                if (r > 0 && r < gridSize+1 && c > 0 && c < gridSize+1) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r-1;
+                    cell.dataset.col = c-1;
+                    // Drag&Drop обработчики будут добавлены в renderGrid
+                    wrapper.appendChild(cell);
+                }
+            }
+        }
+    }
+
+    // --- makeDraggable теперь вне renderNumbers ---
+    function makeDraggable(el) {
+        el.setAttribute('draggable', 'true');
+        el.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', el.textContent);
+            e.dataTransfer.effectAllowed = 'copy';
+            el.classList.add('dragging');
+        });
+        el.addEventListener('dragend', (e) => {
+            el.classList.remove('dragging');
+        });
+    }
+
+    function renderGrid() {
+        // Только навешиваем обработчики для клеток
+        const wrapper = document.getElementById('gridAreaWrapper');
+        for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+                const cell = wrapper.querySelector(`.grid-cell[data-row='${r}'][data-col='${c}']`);
+                cell.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    cell.classList.add('over');
+                });
+                cell.addEventListener('dragleave', (e) => {
+                    cell.classList.remove('over');
+                });
+                cell.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    cell.classList.remove('over');
+                    const value = e.dataTransfer.getData('text/plain');
+                    if (!cell.textContent) {
+                        placeNumberInCell(r, c, value);
+                        cell.textContent = value;
+                        setTimeout(drawLines, 0);
+                    }
+                });
+                // Для перемещения внутри поля
+                cell.addEventListener('mousedown', (e) => {
+                    if (cell.textContent) {
+                        cell.setAttribute('draggable', 'true');
+                    }
+                });
+                cell.addEventListener('dragstart', (e) => {
+                    if (cell.textContent) {
+                        e.dataTransfer.setData('text/plain', cell.textContent);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setTimeout(() => { cell.textContent = ''; gridState[r][c] = null; drawLines(); }, 0);
+                    }
+                });
+                cell.addEventListener('dragend', (e) => {
+                    cell.removeAttribute('draggable');
+                });
+            }
+        }
+        createSVG();
+    }
+
+    // Удаление числа, если бросили вне поля
+    document.body.addEventListener('drop', (e) => {
+        if (!e.target.classList.contains('grid-cell')) {
+            // Если бросили вне клетки — ничего не делаем (число уже удалено из клетки)
+            drawLines();
+        }
+    });
+    document.body.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    function placeNumberInCell(r, c, value) {
+        gridState[r][c] = +value;
+    }
+
+    function getCell(r, c) {
+        const wrapper = document.getElementById('gridAreaWrapper');
+        return wrapper.querySelector(`.grid-cell[data-row='${r}'][data-col='${c}']`);
+    }
+
+    // Линии между соседними по значению числами
+    function drawLines() {
+        if (!svgLines) return;
+        svgLines.innerHTML = '';
+        const N = gridSize;
+        let matrix = Array.from({length: N}, () => Array(N).fill(null));
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+                matrix[r][c] = gridState[r][c];
+            }
+        }
+        // Отладка: выводим gridState
+        console.log('gridState:', JSON.parse(JSON.stringify(gridState)));
+        const dirs = [
+            [-1, 0], [1, 0], [0, -1], [0, 1],
+            [-1, -1], [-1, 1], [1, -1], [1, 1]
+        ];
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+                const val = matrix[r][c];
+                if (val === null) continue;
+                for (const [dr, dc] of dirs) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
+                    if (matrix[nr][nc] === val + 1) {
+                        // Отладка: выводим координаты и значения
+                        console.log(`Линия: (${r},${c})=${val} -> (${nr},${nc})=${matrix[nr][nc]}`);
+                        drawLineBetweenGridCells(r, c, nr, nc);
+                    }
+                }
+            }
+        }
+        highlightErrors();
+    }
+
+    // Подсветка ошибок
+    function highlightErrors() {
+        const N = gridSize;
+        const wrapper = document.getElementById('gridAreaWrapper');
+        // Собираем соответствие: какое число должно быть в каком столбце/строке
+        // top/bottom: столбец, left/right: строка
+        let validCols = {};
+        let validRows = {};
+        for (let c = 0; c < N; c++) {
+            const topVal = currentEdgeNumbers.top[c];
+            const bottomVal = currentEdgeNumbers.bottom[c];
+            if (topVal !== null) {
+                if (!validCols[topVal]) validCols[topVal] = [];
+                validCols[topVal].push(c);
+            }
+            if (bottomVal !== null) {
+                if (!validCols[bottomVal]) validCols[bottomVal] = [];
+                validCols[bottomVal].push(c);
+            }
+        }
+        for (let r = 0; r < N; r++) {
+            const leftVal = currentEdgeNumbers.left[r];
+            const rightVal = currentEdgeNumbers.right[r];
+            if (leftVal !== null) {
+                if (!validRows[leftVal]) validRows[leftVal] = [];
+                validRows[leftVal].push(r);
+            }
+            if (rightVal !== null) {
+                if (!validRows[rightVal]) validRows[rightVal] = [];
+                validRows[rightVal].push(r);
+            }
+        }
+        // Проверяем каждую клетку
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+                const cell = wrapper.querySelector(`.grid-cell[data-row='${r}'][data-col='${c}']`);
+                const val = gridState[r][c];
+                if (!val) {
+                    cell.classList.remove('cell-error');
+                    continue;
+                }
+                let ok = false;
+                // Если число есть в validCols — оно может быть в этих столбцах
+                if (validCols[val] && validCols[val].includes(c)) ok = true;
+                // Если число есть в validRows — оно может быть в этих строках
+                if (validRows[val] && validRows[val].includes(r)) ok = true;
+                if (ok) {
+                    cell.classList.remove('cell-error');
+                } else {
+                    cell.classList.add('cell-error');
+                }
+            }
+        }
+    }
+
+    // Получить DOM-элемент по координатам в виртуальной матрице
+    function getGridItemElement(r, c) {
+        const N = gridSize;
+        // Края
+        if (r === 0 && c > 0 && c < N+1) return document.querySelector(`#gridAreaWrapper .edge-circle[data-edge='top'][data-idx='${c-1}']`);
+        if (r === N+1 && c > 0 && c < N+1) return document.querySelector(`#gridAreaWrapper .edge-circle[data-edge='bottom'][data-idx='${c-1}']`);
+        if (c === 0 && r > 0 && r < N+1) return document.querySelector(`#gridAreaWrapper .edge-circle[data-edge='left'][data-idx='${r-1}']`);
+        if (c === N+1 && r > 0 && r < N+1) return document.querySelector(`#gridAreaWrapper .edge-circle[data-edge='right'][data-idx='${r-1}']`);
+        // Поле
+        if (r > 0 && r < N+1 && c > 0 && c < N+1) return document.querySelector(`#gridAreaWrapper .grid-cell[data-row='${r-1}'][data-col='${c-1}']`);
+        return null;
+    }
+
+    function drawLineBetweenGridItems(r1, c1, r2, c2) {
+        const el1 = getGridItemElement(r1, c1);
+        const el2 = getGridItemElement(r2, c2);
+        if (!el1 || !el2) return;
+        const rect1 = el1.getBoundingClientRect();
+        const rect2 = el2.getBoundingClientRect();
+        const wrapperRect = document.getElementById('gridAreaWrapper').getBoundingClientRect();
+        const x1 = rect1.left + rect1.width/2 - wrapperRect.left;
+        const y1 = rect1.top + rect1.height/2 - wrapperRect.top;
+        const x2 = rect2.left + rect2.width/2 - wrapperRect.left;
+        const y2 = rect2.top + rect2.height/2 - wrapperRect.top;
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#00c6ff');
+        line.setAttribute('stroke-width', '6');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('opacity', '0.35');
+        svgLines.appendChild(line);
+    }
+
+    function drawLineBetweenGridCells(r1, c1, r2, c2) {
+        const el1 = document.querySelector(`#gridAreaWrapper .grid-cell[data-row='${r1}'][data-col='${c1}']`);
+        const el2 = document.querySelector(`#gridAreaWrapper .grid-cell[data-row='${r2}'][data-col='${c2}']`);
+        if (!el1 || !el2) return;
+        const rect1 = el1.getBoundingClientRect();
+        const rect2 = el2.getBoundingClientRect();
+        const wrapperRect = document.getElementById('gridAreaWrapper').getBoundingClientRect();
+        const x1 = rect1.left + rect1.width/2 - wrapperRect.left;
+        const y1 = rect1.top + rect1.height/2 - wrapperRect.top;
+        const x2 = rect2.left + rect2.width/2 - wrapperRect.left;
+        const y2 = rect2.top + rect2.height/2 - wrapperRect.top;
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#00c6ff');
+        line.setAttribute('stroke-width', '6');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('opacity', '0.35');
+        svgLines.appendChild(line);
+    }
+
+    // --- Эталонная змейка для ответа ---
+    let answerMatrix = null;
+    function rerender() {
+        gridSize = +gridSizeSelect.value;
+        // Генерируем змейку и расставляем числа по краям
+        let grid, path, edgeNumbers;
+        do {
+            ({grid, path} = generateSnake(gridSize));
+            edgeNumbers = placeNumbersOnEdges(path, gridSize);
+        } while (!edgeNumbers);
+        currentEdgeNumbers = edgeNumbers;
+        gridState = Array.from({length: gridSize}, () => Array(gridSize).fill(null));
+        answerMatrix = grid; // Сохраняем эталонную матрицу
+        renderNumbersAndGrid();
+        renderGrid();
+        drawLines();
+        document.getElementById('answerWrapper').style.display = 'none';
+        document.getElementById('answerWrapper').innerHTML = '';
+    }
+
+    gridSizeSelect.addEventListener('change', rerender);
+    window.addEventListener('resize', drawLines);
+    rerender();
+    // --- Кнопка сброса ---
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        gridState = Array.from({length: gridSize}, () => Array(gridSize).fill(null));
+        // Очищаем DOM
+        const wrapper = document.getElementById('gridAreaWrapper');
+        for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+                const cell = wrapper.querySelector(`.grid-cell[data-row='${r}'][data-col='${c}']`);
+                cell.textContent = '';
+            }
+        }
+        drawLines();
+    });
+    // --- Кнопка новая игра ---
+    document.getElementById('newGameBtn').addEventListener('click', rerender);
+    // --- Кнопка показать ответ ---
+    document.getElementById('showAnswerBtn').addEventListener('click', () => {
+        const N = gridSize;
+        const answerDiv = document.getElementById('answerWrapper');
+        answerDiv.style.display = 'block';
+        answerDiv.innerHTML = '';
+        // Создаём сетку (N+2)x(N+2) с кружками и заполненным полем
+        const wrapper = document.createElement('div');
+        wrapper.className = 'grid-area-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'grid';
+        wrapper.style.gridTemplateColumns = `repeat(${N+2}, 48px)`;
+        wrapper.style.gridTemplateRows = `repeat(${N+2}, 48px)`;
+        wrapper.style.background = 'none';
+        wrapper.style.marginTop = '24px';
+        wrapper.style.marginLeft = 'auto';
+        wrapper.style.marginRight = 'auto';
+        // Кружки и поле
+        for (let r = 0; r < N+2; r++) {
+            for (let c = 0; c < N+2; c++) {
+                // Углы — пусто
+                if ((r === 0 || r === N+1) && (c === 0 || c === N+1)) {
+                    const empty = document.createElement('div');
+                    empty.className = 'edge-circle empty';
+                    wrapper.appendChild(empty);
+                    continue;
+                }
+                // Верхний край
+                if (r === 0 && c > 0 && c < N+1) {
+                    const val = currentEdgeNumbers.top[c-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'top');
+                    el.setAttribute('data-idx', c-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Нижний край
+                if (r === N+1 && c > 0 && c < N+1) {
+                    const val = currentEdgeNumbers.bottom[c-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'bottom');
+                    el.setAttribute('data-idx', c-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Левый край
+                if (c === 0 && r > 0 && r < N+1) {
+                    const val = currentEdgeNumbers.left[r-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'left');
+                    el.setAttribute('data-idx', r-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Правый край
+                if (c === N+1 && r > 0 && r < N+1) {
+                    const val = currentEdgeNumbers.right[r-1];
+                    const el = document.createElement('div');
+                    el.className = val !== null ? 'edge-circle' : 'edge-circle empty';
+                    el.setAttribute('data-edge', 'right');
+                    el.setAttribute('data-idx', r-1);
+                    if (val !== null) {
+                        el.textContent = val;
+                    }
+                    wrapper.appendChild(el);
+                    continue;
+                }
+                // Внутри — клетка поля
+                if (r > 0 && r < N+1 && c > 0 && c < N+1) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.textContent = answerMatrix[r-1][c-1];
+                    cell.style.cursor = 'default';
+                    wrapper.appendChild(cell);
+                }
+            }
+        }
+        answerDiv.appendChild(wrapper);
+        // SVG для линий — создаём после полной отрисовки DOM
+        setTimeout(() => {
+            let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.left = '0';
+            svg.style.top = '0';
+            svg.setAttribute('width', wrapper.offsetWidth);
+            svg.setAttribute('height', wrapper.offsetHeight);
+            svg.style.width = wrapper.offsetWidth + 'px';
+            svg.style.height = wrapper.offsetHeight + 'px';
+            svg.style.pointerEvents = 'none';
+            svg.style.zIndex = '2';
+            wrapper.appendChild(svg);
+            // Рисуем линии
+            const dirs = [
+                [-1, 0], [1, 0], [0, -1], [0, 1],
+                [-1, -1], [-1, 1], [1, -1], [1, 1]
+            ];
+            for (let r = 1; r <= N; r++) {
+                for (let c = 1; c <= N; c++) {
+                    const val = answerMatrix[r-1][c-1];
+                    if (val === null) continue;
+                    for (const [dr, dc] of dirs) {
+                        const nr = r + dr, nc = c + dc;
+                        if (nr < 1 || nr > N || nc < 1 || nc > N) continue;
+                        if (answerMatrix[nr-1][nc-1] === val + 1) {
+                            // Рисуем линию
+                            const el1 = wrapper.querySelector(`.grid-cell[data-row='${r-1}'][data-col='${c-1}']`);
+                            const el2 = wrapper.querySelector(`.grid-cell[data-row='${nr-1}'][data-col='${nc-1}']`);
+                            if (!el1 || !el2) continue;
+                            const x1 = el1.offsetLeft + el1.offsetWidth/2;
+                            const y1 = el1.offsetTop + el1.offsetHeight/2;
+                            const x2 = el2.offsetLeft + el2.offsetWidth/2;
+                            const y2 = el2.offsetTop + el2.offsetHeight/2;
+                            const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+                            line.setAttribute('x1', x1);
+                            line.setAttribute('y1', y1);
+                            line.setAttribute('x2', x2);
+                            line.setAttribute('y2', y2);
+                            line.setAttribute('stroke', '#00c6ff');
+                            line.setAttribute('stroke-width', '6');
+                            line.setAttribute('stroke-linecap', 'round');
+                            line.setAttribute('opacity', '0.35');
+                            svg.appendChild(line);
+                        }
+                    }
+                }
+            }
+        }, 0);
+    });
+    </script>
+</body>
+</html> 
