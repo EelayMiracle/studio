@@ -204,7 +204,7 @@
     </div>
 
     <script>
-        const EMOJIS = ['🎃','🎄','🎀','🎈','🎁','🎨','⚽','💎','🏀','🎲','🧩','⛏','💊','🧲','💡','⏳','⏱','🍧','🍭','☕','🍇','🍍','🍎','🍓','🍒','🍄','🌷','🌼','🌴'];
+        const EMOJIS = ['🎃','🎄','🎀','🎈','🎁','🎨','⚽','💎','🏀','🎲','🧩','🚀','🔥','🧡','💊','🧲','💡','⏳','🍧','🍭','☕','🍇','🍍','🍎','🍓','🍒','🍄','🌷','🌼','🌴'];
 
         const state = {
             problems: []
@@ -354,12 +354,12 @@
 
                 // a + b = c — три модели
                 const t1 = genAB();
-                const [A1,B1] = pickTwoDistinctEmojis();
-                const m1 = { eq:`${A1} ${plusSign} ${t1.b} = ${t1.c}`, emoji1:A1, emoji2:'', correct1:t1.a, correct2:t1.c, var1:'a', var2:'c' };
+                const [A1,C1] = pickTwoDistinctEmojis();
+                const m1 = { eq:`${A1} ${plusSign} ${t1.b} = ${C1}`, emoji1:A1, emoji2:C1, correct1:t1.a, correct2:t1.c, var1:'a', var2:'c' };
 
                 const t2 = genAB();
                 const [B2,C2] = pickTwoDistinctEmojis();
-                const m2 = { eq:`${t2.a} ${plusSign} ${B2} = ${t2.c}`, emoji1:B2, emoji2:'', correct1:t2.b, correct2:t2.c, var1:'b', var2:'c' };
+                const m2 = { eq:`${t2.a} ${plusSign} ${B2} = ${C2}`, emoji1:B2, emoji2:C2, correct1:t2.b, correct2:t2.c, var1:'b', var2:'c' };
 
                 const t3 = genAB();
                 const [A3,B3] = pickTwoDistinctEmojis();
@@ -421,6 +421,7 @@
             // Ветка Вычитание
             if (mode === 'sub') {
                 const minusSign = '−';
+                const plusSign = '+';
 
                 // Базовые числа: на входе b,c; a = b + c
                 function genBC() {
@@ -430,45 +431,52 @@
                     return { a, b, c };
                 }
 
-                // a − b = c — базовые модели
+                // a − b = c — базовые модели (3 варианта)
+                // Модель 1: a - ? = ? (неизвестны b и c)
                 const t1 = genBC();
                 const [B1,C1] = pickTwoDistinctEmojis();
                 const m1 = { eq:`${t1.a} ${minusSign} ${B1} = ${C1}`, emoji1:B1, emoji2:C1, correct1:t1.b, correct2:t1.c, var1:'b', var2:'c' };
 
+                // Модель 2: ? - b = ? (неизвестны a и c)
                 const t2 = genBC();
                 const [A2,C2] = pickTwoDistinctEmojis();
                 const m2 = { eq:`${A2} ${minusSign} ${t2.b} = ${C2}`, emoji1:A2, emoji2:C2, correct1:t2.a, correct2:t2.c, var1:'a', var2:'c' };
 
+                // Модель 3: a - ? = ? (неизвестны b и c) - дублирует модель 1 с другими числами
                 const t3 = genBC();
-                const [A3,B3] = pickTwoDistinctEmojis();
-                const m3 = { eq:`${A3} ${minusSign} ${B3} = ${t3.c}`, emoji1:A3, emoji2:B3, correct1:t3.a, correct2:t3.b, var1:'a', var2:'b' };
+                const [B3,C3] = pickTwoDistinctEmojis();
+                const m3 = { eq:`${t3.a} ${minusSign} ${B3} = ${C3}`, emoji1:B3, emoji2:C3, correct1:t3.b, correct2:t3.c, var1:'b', var2:'c' };
 
-                // a − b = e − d, e = a − b + d = c + d
+                // a − b = e − d, e = a − b + d = c + d (4 модели)
+                // Модель 4: a - ? = e - ? (неизвестны b и d)
                 const t4 = genBC();
                 const d4 = randomInt(ranges.dMin, ranges.dMax);
                 const e4 = t4.c + d4;
                 const [B4,D4] = pickTwoDistinctEmojis();
                 const m4 = { eq:`${t4.a} ${minusSign} ${B4} = ${e4} ${minusSign} ${D4}`, emoji1:B4, emoji2:D4, correct1:t4.b, correct2:d4, var1:'b', var2:'d' };
 
+                // Модель 5: a - ? = ? - d (неизвестны b и e)
                 const t5 = genBC();
                 const d5 = randomInt(ranges.dMin, ranges.dMax);
                 const e5 = t5.c + d5;
                 const [B5,E5] = pickTwoDistinctEmojis();
                 const m5 = { eq:`${t5.a} ${minusSign} ${B5} = ${E5} ${minusSign} ${d5}`, emoji1:B5, emoji2:E5, correct1:t5.b, correct2:e5, var1:'b', var2:'e' };
 
+                // Модель 6: ? - b = e - ? (неизвестны a и d)
                 const t6 = genBC();
                 const d6 = randomInt(ranges.dMin, ranges.dMax);
                 const e6 = t6.c + d6;
                 const [A6,D6] = pickTwoDistinctEmojis();
                 const m6 = { eq:`${A6} ${minusSign} ${t6.b} = ${e6} ${minusSign} ${D6}`, emoji1:A6, emoji2:D6, correct1:t6.a, correct2:d6, var1:'a', var2:'d' };
 
+                // Модель 7: ? - b = ? - d (неизвестны a и e)
                 const t7 = genBC();
                 const d7 = randomInt(ranges.dMin, ranges.dMax);
                 const e7 = t7.c + d7;
                 const [A7,E7] = pickTwoDistinctEmojis();
                 const m7 = { eq:`${A7} ${minusSign} ${t7.b} = ${E7} ${minusSign} ${d7}`, emoji1:A7, emoji2:E7, correct1:t7.a, correct2:e7, var1:'a', var2:'e' };
 
-                // a − b = e + d, e = a − b − d = c − d (обеспечим e ≥ 1 => d ≤ c − 1)
+                // a − b = e + d, e = a − b − d = c − d (4 модели)
                 function genBC_ePlus() {
                     const t = genBC();
                     const maxD = Math.max(1, Math.min(ranges.dMax, t.c - 1));
@@ -477,18 +485,22 @@
                     return { ...t, d, e };
                 }
 
+                // Модель 8: a - ? = e + ? (неизвестны b и d)
                 const t8 = genBC_ePlus();
                 const [B8,D8] = pickTwoDistinctEmojis();
                 const m8 = { eq:`${t8.a} ${minusSign} ${B8} = ${t8.e} ${plusSign} ${D8}`, emoji1:B8, emoji2:D8, correct1:t8.b, correct2:t8.d, var1:'b', var2:'d' };
 
+                // Модель 9: a - ? = ? + d (неизвестны b и e)
                 const t9 = genBC_ePlus();
                 const [B9,E9] = pickTwoDistinctEmojis();
                 const m9 = { eq:`${t9.a} ${minusSign} ${B9} = ${E9} ${plusSign} ${t9.d}`, emoji1:B9, emoji2:E9, correct1:t9.b, correct2:t9.e, var1:'b', var2:'e' };
 
+                // Модель 10: ? - b = e + ? (неизвестны a и d)
                 const t10 = genBC_ePlus();
                 const [A10,D10] = pickTwoDistinctEmojis();
                 const m10 = { eq:`${A10} ${minusSign} ${t10.b} = ${t10.e} ${plusSign} ${D10}`, emoji1:A10, emoji2:D10, correct1:t10.a, correct2:t10.d, var1:'a', var2:'d' };
 
+                // Модель 11: ? - b = ? + d (неизвестны a и e)
                 const t11 = genBC_ePlus();
                 const [A11,E11] = pickTwoDistinctEmojis();
                 const m11 = { eq:`${A11} ${minusSign} ${t11.b} = ${E11} ${plusSign} ${t11.d}`, emoji1:A11, emoji2:E11, correct1:t11.a, correct2:t11.e, var1:'a', var2:'e' };
@@ -749,24 +761,27 @@
                 line1.appendChild(row1);
                 box.appendChild(line1);
 
-                const line2 = document.createElement('div');
-                line2.className = 'answer-line';
-                const label2 = document.createElement('div');
-                label2.className = 'answer-label';
-                label2.textContent = `${p.emoji2} =`;
-                const row2 = document.createElement('div');
-                row2.className = 'choices';
-                const opts2 = buildOptionsForVar(p.var2, p.correct2, p.ranges, optCount);
-                opts2.forEach(v => {
-                    const btn = document.createElement('div');
-                    btn.className = 'choice';
-                    btn.textContent = v;
-                    btn.addEventListener('click', () => selectInRow(p, 2, v, btn, row2));
-                    row2.appendChild(btn);
-                });
-                line2.appendChild(label2);
-                line2.appendChild(row2);
-                box.appendChild(line2);
+                // Показываем вторую строку только если есть второй эмодзи
+                if (p.emoji2) {
+                    const line2 = document.createElement('div');
+                    line2.className = 'answer-line';
+                    const label2 = document.createElement('div');
+                    label2.className = 'answer-label';
+                    label2.textContent = `${p.emoji2} =`;
+                    const row2 = document.createElement('div');
+                    row2.className = 'choices';
+                    const opts2 = buildOptionsForVar(p.var2, p.correct2, p.ranges, optCount);
+                    opts2.forEach(v => {
+                        const btn = document.createElement('div');
+                        btn.className = 'choice';
+                        btn.textContent = v;
+                        btn.addEventListener('click', () => selectInRow(p, 2, v, btn, row2));
+                        row2.appendChild(btn);
+                    });
+                    line2.appendChild(label2);
+                    line2.appendChild(row2);
+                    box.appendChild(line2);
+                }
 
                 const msg = document.createElement('div');
                 msg.id = `msg-${idx}`;
@@ -800,8 +815,10 @@
             [...container.children].forEach(el => {
                 if (el !== btn) el.classList.add('disabled');
             });
-            // если обе выбраны — проверим сразу и подсветим итог (зелёный/красный)
-            if (problem.lock1 && problem.lock2) {
+            // Проверяем задачу: если есть только одно неизвестное или оба выбраны
+            const hasTwoUnknowns = problem.emoji2 && problem.emoji2 !== '';
+            const allSelected = problem.lock1 && (!hasTwoUnknowns || problem.lock2);
+            if (allSelected) {
                 const ok = validateProblem(problem);
                 const box = container.closest('.task-box');
                 highlightFinal(box, ok);
@@ -838,15 +855,46 @@
         }
 
         function validateProblem(problem) {
-            const expr = problem.eq
+            let expr = problem.eq
                 .replaceAll('•','*')
                 .replaceAll('÷','/')
-                .replaceAll(problem.emoji1, String(problem.chosen1))
-                .replaceAll(problem.emoji2, String(problem.chosen2));
+                .replaceAll('−','-')  // Заменяем символ минуса на обычный дефис
+                .replaceAll(problem.emoji1, String(problem.chosen1));
+            
+            // Заменяем второй эмодзи только если он есть
+            if (problem.emoji2 && problem.emoji2 !== '') {
+                expr = expr.replaceAll(problem.emoji2, String(problem.chosen2));
+            }
+            
             const [L,R] = expr.split('=');
-            function calc(s){ return Function('return ('+ s.replaceAll(' ','') +')')(); }
+            
+            // Безопасная функция вычисления
+            function calc(s) {
+                // Убираем все пробелы и проверяем, что строка содержит только допустимые символы
+                const cleanS = s.replaceAll(' ', '');
+                // Проверяем, что строка содержит только цифры, операторы и скобки
+                if (!/^[0-9+\-*/().\s]+$/.test(cleanS)) {
+                    throw new Error('Недопустимые символы в выражении: ' + cleanS);
+                }
+                return Function('return (' + cleanS + ')')();
+            }
+            
             let ok = false;
-            try { ok = calc(L) === calc(R); } catch { ok = false; }
+            try { 
+                const leftVal = calc(L);
+                const rightVal = calc(R);
+                ok = leftVal === rightVal;
+                // Отладочная информация
+                console.log(`Уравнение: ${problem.eq}`);
+                console.log(`После замены: ${expr}`);
+                console.log(`Левая часть: ${L} = ${leftVal}`);
+                console.log(`Правая часть: ${R} = ${rightVal}`);
+                console.log(`Результат: ${ok ? 'Верно' : 'Неверно'}`);
+            } catch (e) { 
+                console.log('Ошибка в вычислениях:', e);
+                console.log(`Проблемное выражение: ${expr}`);
+                ok = false; 
+            }
             const idx = state.problems.indexOf(problem);
             const m = document.getElementById(`msg-${idx}`);
             m.textContent = ok ? 'Верно!' : 'Неверно';
@@ -857,7 +905,9 @@
         function checkAll() {
             let allOk = true;
             state.problems.forEach(p => {
-                if (!(p.lock1 && p.lock2)) allOk = false;
+                const hasTwoUnknowns = p.emoji2 && p.emoji2 !== '';
+                const allSelected = p.lock1 && (!hasTwoUnknowns || p.lock2);
+                if (!allSelected) allOk = false;
                 else if (!validateProblem(p)) allOk = false;
             });
             showMessage(allOk ? 'Все ответы верны!' : 'Есть ошибки или не все выбрано.', allOk ? 'success' : 'failure');
