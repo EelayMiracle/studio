@@ -189,6 +189,11 @@
                     <option value="add">+ сложение</option>
                     <option value="sub">− вычитание</option>
                 </select>
+                <label style="margin-left:12px;">Неизвестных: </label>
+                <select id="unknownMode">
+                    <option value="two" selected>2</option>
+                    <option value="one">1</option>
+                </select>
             </div>
             <div class="settings-row">
                 <button class="btn secondary" id="newTask">Новая задача</button>
@@ -442,10 +447,10 @@
                 const [A2,C2] = pickTwoDistinctEmojis();
                 const m2 = { eq:`${A2} ${minusSign} ${t2.b} = ${C2}`, emoji1:A2, emoji2:C2, correct1:t2.a, correct2:t2.c, var1:'a', var2:'c' };
 
-                // Модель 3: a - ? = ? (неизвестны b и c) - дублирует модель 1 с другими числами
+                // Модель 3: ? - ? = c (неизвестны a и b, известен результат c)
                 const t3 = genBC();
-                const [B3,C3] = pickTwoDistinctEmojis();
-                const m3 = { eq:`${t3.a} ${minusSign} ${B3} = ${C3}`, emoji1:B3, emoji2:C3, correct1:t3.b, correct2:t3.c, var1:'b', var2:'c' };
+                const [A3,B3] = pickTwoDistinctEmojis();
+                const m3 = { eq:`${A3} ${minusSign} ${B3} = ${t3.c}`, emoji1:A3, emoji2:B3, correct1:t3.a, correct2:t3.b, var1:'a', var2:'b' };
 
                 // a − b = e − d, e = a − b + d = c + d (4 модели)
                 // Модель 4: a - ? = e - ? (неизвестны b и d)
@@ -728,6 +733,41 @@
             return arr;
         }
 
+        // Преобразование задачи к формату с одной неизвестной
+        function toSingleUnknown(problem) {
+            // Если второй эмодзи отсутствует, уже одна неизвестная
+            if (!problem.emoji2 || problem.emoji2 === '') return problem;
+
+            const keepFirst = Math.random() < 0.5;
+            const clone = { ...problem };
+
+            if (keepFirst) {
+                // Оставляем неизвестной первую, вторую подставляем числом
+                clone.eq = clone.eq.replaceAll(clone.emoji2, String(clone.correct2));
+                clone.emoji2 = '';
+                clone.var2 = null;
+                clone.correct2 = null;
+            } else {
+                // Оставляем неизвестной вторую: подставляем первую и делаем своп, чтобы UI показывал одну строку
+                let newEq = clone.eq.replaceAll(clone.emoji1, String(clone.correct1));
+                // Теперь поменяем местами поля, чтобы оставшаяся неизвестная стала первой
+                const tmpEmoji = clone.emoji1;
+                const tmpVar = clone.var1;
+                const tmpCorrect = clone.correct1;
+                clone.emoji1 = clone.emoji2;
+                clone.var1 = clone.var2;
+                clone.correct1 = clone.correct2;
+                clone.emoji2 = tmpEmoji; // бывшая первая теперь просто маркер для удаления из уравнения (уже заменили выше)
+                clone.var2 = null;
+                clone.correct2 = null;
+                clone.eq = newEq;
+                // скрыть вторую строку
+                clone.emoji2 = '';
+            }
+
+            return clone;
+        }
+
         function renderProblems() {
             const cont = document.getElementById('problems');
             cont.innerHTML = '';
@@ -921,6 +961,7 @@
 
         function newTask() {
             const mode = document.getElementById('modeMulDiv').value || 'mul';
+            const unknownMode = document.getElementById('unknownMode')?.value || 'two';
             // переключаем видимость диапазонов
             // mul -> a,b,d; div -> b,c,d; add -> a,b,d; sub -> b,c,d
             document.getElementById('rangeA').style.display = (mode === 'mul' || mode === 'add') ? '' : 'none';
@@ -936,11 +977,15 @@
                 dMin: Math.min(parseInt(document.getElementById('dMin').value)||1, parseInt(document.getElementById('dMax').value)||15),
                 dMax: Math.max(parseInt(document.getElementById('dMin').value)||1, parseInt(document.getElementById('dMax').value)||15)
             };
-            state.problems = makeFixedModels(ranges, mode).map(p => {
+            let generated = makeFixedModels(ranges, mode).map(p => {
                 p.ranges = ranges;
                 p.lock1 = false; p.lock2 = false; p.chosen1 = null; p.chosen2 = null;
                 return p;
             });
+            if (unknownMode === 'one') {
+                generated = generated.map(toSingleUnknown);
+            }
+            state.problems = generated;
             renderProblems();
             showMessage('', '');
         }
