@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Группы для таблицы умножения</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0f1220;
+      color: #e9ecf1;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: linear-gradient(180deg, #1b2140, #151a33);
+      border-bottom: 1px solid #2a335f;
+      z-index: 10;
+    }
+    .title {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .btn {
+      background: #3a49a6;
+      color: #fff;
+      border: 0;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.05s ease, opacity 0.2s ease;
+      font-weight: 600;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: translateY(1px); }
+
+    .canvas-wrap {
+      position: absolute;
+      top: 54px;
+      left: 0;
+      right: 0;
+      bottom: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+    .stage {
+      position: relative;
+      background: #0b1030;
+      border: 1px solid #2a335f;
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 16px;
+    }
+    .panel {
+      width: min(880px, 96vw);
+      max-height: 92vh;
+      overflow: auto;
+      background: #121733;
+      border: 1px solid #2a335f;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .field {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      background: #0f1430;
+      border: 1px solid #273064;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .field label { opacity: 0.9; }
+    .num {
+      width: 72px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #2c356b;
+      background: #0b1030;
+      color: #e9ecf1;
+    }
+    .shapes {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .shape-tile {
+      background: #0b1030;
+      border: 1px solid #2b356e;
+      border-radius: 10px;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .shape-tile.active { outline: 2px solid #5b7cff; }
+    .shape-name { font-size: 12px; opacity: 0.9; }
+    .panel-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+    .muted { opacity: 0.8; font-size: 12px; }
+
+    /* Bottom answers bar */
+    .answerbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: 92px;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(180deg, #121733, #0f1430);
+      border-top: 1px solid #2a335f;
+      padding: 10px 12px;
+      box-sizing: border-box;
+      z-index: 15;
+    }
+    .answers-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      overflow: auto;
+    }
+    .ans-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0b1030;
+      border: 1px solid #273064;
+      border-radius: 10px;
+      padding: 6px 8px;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+    .mini {
+      width: 28px; height: 28px;
+      display: block;
+    }
+    .num.small {
+      width: 64px;
+      padding: 6px 8px;
+      font-size: 14px;
+    }
+    .label { font-size: 12px; opacity: 0.9; }
+    .result { margin-left: 8px; font-weight: 600; }
+    .ok { color: #8fdf5f; }
+    .err { color: #ff6f6f; }
+    .valid { outline: 2px solid #3aa86a; }
+    .invalid { outline: 2px solid #cc5252; }
+  </style>
+  <link rel="icon" href="favicon.ico">
+  <meta name="color-scheme" content="dark light">
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">Игра: группы для изучения умножения</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="btn-new" class="btn">Новая игра</button>
+      <button id="btn-settings" class="btn" title="Открыть настройки">Настройки</button>
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <div id="stage" class="stage">
+      <canvas id="view"></canvas>
+    </div>
+  </div>
+
+  <div id="answerbar" class="answerbar">
+    <div id="answersRow" class="answers-row"></div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="panel">
+      <h3 style="margin:0 0 10px 0;">Настройки генерации</h3>
+      <div class="grid">
+        <div class="field">
+          <label>Минимум групп на тип</label>
+          <input id="minGroups" class="num" type="number" min="0" max="30" value="2">
+          <div class="muted">по умолчанию: 2</div>
+        </div>
+        <div class="field">
+          <label>Максимум групп на тип</label>
+          <input id="maxGroups" class="num" type="number" min="0" max="30" value="4">
+          <div class="muted">по умолчанию: 4</div>
+        </div>
+        <div class="field">
+          <label>Минимум в группе</label>
+          <input id="minPerGroup" class="num" type="number" min="1" max="50" value="2">
+          <div class="muted">по умолчанию: 2</div>
+        </div>
+        <div class="field">
+          <label>Максимум в группе</label>
+          <input id="maxPerGroup" class="num" type="number" min="1" max="50" value="5">
+          <div class="muted">по умолчанию: 5</div>
+        </div>
+        <div class="field">
+          <label>Сколько типов участвует</label>
+          <input id="participatingCount" class="num" type="number" min="1" max="6" value="2">
+          <div class="muted">если выбрано меньше — возьмём все</div>
+        </div>
+        <div class="field">
+          <label>Радиус группы (px)</label>
+          <input id="groupRadius" class="num" type="number" min="20" max="200" value="70">
+          <div class="muted">область разброса элементов</div>
+        </div>
+        <div class="field">
+          <label>Радиус элемента (px)</label>
+          <input id="itemRadius" class="num" type="number" min="6" max="40" value="12">
+          <div class="muted">минимальный зазор = 2R</div>
+        </div>
+        <div class="field">
+          <label>Доп. зазор между группами (px)</label>
+          <input id="extraGap" class="num" type="number" min="0" max="60" value="6">
+          <div class="muted">к 2*(Rгруппы + Rэлемента)</div>
+        </div>
+      </div>
+
+      <h4 style="margin:16px 0 8px 0;">Выберите типы фигур (миниатюры):</h4>
+      <div id="shapeGrid" class="shapes"></div>
+      <div class="muted" style="margin-top:6px;">Подсказка: если выбрано 4, а участвовать должны 3 — возьмём любые 3 случайных. Если выбрано 2, а участвуют 3 — используем эти 2 без дубликатов.</div>
+
+      <div class="panel-actions">
+        <button id="btn-randomize" class="btn" title="Случайно изменить параметры в разумных пределах">Случайные настройки</button>
+        <div style="flex:1"></div>
+        <button id="btn-cancel" class="btn" style="background:#2f365d;">Отмена</button>
+        <button id="btn-apply" class="btn">Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('view');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const stage = document.getElementById('stage');
+    const wrap = document.querySelector('.canvas-wrap');
+
+    const overlay = document.getElementById('overlay');
+    const shapeGrid = document.getElementById('shapeGrid');
+    const inputIds = [
+      'minGroups','maxGroups','minPerGroup','maxPerGroup','participatingCount','groupRadius','itemRadius','extraGap'
+    ];
+    const ui = Object.fromEntries(inputIds.map(id => [id, document.getElementById(id)]));
+
+    const btnNew = document.getElementById('btn-new');
+    const btnSettings = document.getElementById('btn-settings');
+    const btnApply = document.getElementById('btn-apply');
+    const btnCancel = document.getElementById('btn-cancel');
+    const btnRandomize = document.getElementById('btn-randomize');
+    const answersRow = document.getElementById('answersRow');
+
+    function resizeCanvas() {
+      const cont = wrap.getBoundingClientRect();
+      const maxW = Math.max(100, cont.width - 24);
+      const maxH = Math.max(100, cont.height - 24);
+      const ratio = 16/9;
+      let w = maxW;
+      let h = w / ratio;
+      if (h > maxH) {
+        h = maxH;
+        w = h * ratio;
+      }
+      stage.style.width = Math.floor(w) + 'px';
+      stage.style.height = Math.floor(h) + 'px';
+
+      const rect = stage.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawScene(lastState);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Shapes library
+    const SHAPES = [
+      { id: 'circle', name: 'Круг', draw: (c,x,y,r, color) => {
+          c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fillStyle = color; c.fill();
+        }
+      },
+      { id: 'square', name: 'Квадрат', draw: (c,x,y,r, color) => {
+          c.beginPath(); c.fillStyle = color; c.rect(x-r, y-r, 2*r, 2*r); c.fill();
+        }
+      },
+      { id: 'triangle', name: 'Треуг.', draw: (c,x,y,r, color) => {
+          const h = r * Math.sqrt(3);
+          c.beginPath();
+          c.moveTo(x, y - 2*h/3);
+          c.lineTo(x - r, y + h/3);
+          c.lineTo(x + r, y + h/3);
+          c.closePath();
+          c.fillStyle = color; c.fill();
+        }
+      },
+      { id: 'diamond', name: 'Ромб', draw: (c,x,y,r, color) => {
+          c.beginPath();
+          c.moveTo(x, y - r);
+          c.lineTo(x + r, y);
+          c.lineTo(x, y + r);
+          c.lineTo(x - r, y);
+          c.closePath();
+          c.fillStyle = color; c.fill();
+        }
+      },
+      { id: 'pentagon', name: 'Пятиуг.', draw: (c,x,y,r, color) => {
+          c.beginPath();
+          for (let i=0;i<5;i++) {
+            const a = -Math.PI/2 + i * 2*Math.PI/5;
+            const px = x + r * Math.cos(a);
+            const py = y + r * Math.sin(a);
+            if (i===0) c.moveTo(px,py); else c.lineTo(px,py);
+          }
+          c.closePath(); c.fillStyle = color; c.fill();
+        }
+      },
+      { id: 'star', name: 'Звезда', draw: (c,x,y,r, color) => {
+          c.beginPath();
+          for (let i=0;i<10;i++) {
+            const rr = i%2===0? r : r*0.45;
+            const a = -Math.PI/2 + i * Math.PI/5;
+            const px = x + rr * Math.cos(a);
+            const py = y + rr * Math.sin(a);
+            if (i===0) c.moveTo(px,py); else c.lineTo(px,py);
+          }
+          c.closePath(); c.fillStyle = color; c.fill();
+        }
+      },
+    ];
+
+    // Fixed unique colors per shape type (extend if you add shapes)
+    const SHAPE_DEFAULT_COLORS = ['#6fa8ff','#8fdf5f','#ff9c6f','#ffdb6f','#b28cff','#7be0d8','#ff6fa5','#8ce36f'];
+    function colorForShapeId(sid){
+      const idx = SHAPES.findIndex(s => s.id === sid);
+      if (idx < 0) return '#6fa8ff';
+      return SHAPE_DEFAULT_COLORS[idx % SHAPE_DEFAULT_COLORS.length];
+    }
+
+    // Per-round light color palette generation
+    function hslToHex(h, s, l){
+      // h in [0,360), s,l in [0,1]
+      const c = (1 - Math.abs(2*l - 1)) * s;
+      const hp = h / 60;
+      const x = c * (1 - Math.abs((hp % 2) - 1));
+      let r=0,g=0,b=0;
+      if (0 <= hp && hp < 1) { r=c; g=x; b=0; }
+      else if (1 <= hp && hp < 2) { r=x; g=c; b=0; }
+      else if (2 <= hp && hp < 3) { r=0; g=c; b=x; }
+      else if (3 <= hp && hp < 4) { r=0; g=x; b=c; }
+      else if (4 <= hp && hp < 5) { r=x; g=0; b=c; }
+      else if (5 <= hp && hp < 6) { r=c; g=0; b=x; }
+      const m = l - c/2;
+      const R = Math.round((r + m) * 255);
+      const G = Math.round((g + m) * 255);
+      const B = Math.round((b + m) * 255);
+      return '#' + [R,G,B].map(v => v.toString(16).padStart(2,'0')).join('');
+    }
+    function generateLightPalette(n){
+      const startHue = Math.random() * 360;
+      const hues = Array.from({length:n}, (_,i) => (startHue + i * (360/n)) % 360);
+      const s = 0.68 + Math.random()*0.08; // 68..76%
+      const l = 0.62 + Math.random()*0.10; // 62..72%
+      return hues.map(h => hslToHex(h, Math.min(0.9, s), Math.min(0.85, l)));
+    }
+
+    // UI: shape tiles
+    const selectedShapeIds = new Set(['circle','square']);
+    function renderShapeGrid() {
+      shapeGrid.innerHTML = '';
+      SHAPES.forEach(shape => {
+        const tile = document.createElement('div');
+        tile.className = 'shape-tile' + (selectedShapeIds.has(shape.id) ? ' active' : '');
+        const mini = document.createElement('canvas'); mini.width = 64; mini.height = 48;
+        const mctx = mini.getContext('2d');
+        const color = colorForShapeId(shape.id);
+        shape.draw(mctx, 32, 24, 12, color);
+        const name = document.createElement('div'); name.className = 'shape-name'; name.textContent = shape.name;
+        tile.appendChild(mini); tile.appendChild(name);
+        tile.addEventListener('click', () => {
+          if (selectedShapeIds.has(shape.id)) selectedShapeIds.delete(shape.id); else selectedShapeIds.add(shape.id);
+          renderShapeGrid();
+        });
+        shapeGrid.appendChild(tile);
+      });
+    }
+
+    // Helpers
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    function rand(){ return Math.random(); }
+    function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+    function pickActiveTypes(allSelectedIds, participatingCount){
+      const ids = Array.from(allSelectedIds);
+      if (ids.length === 0) return [];
+      const k = Math.min(ids.length, Math.max(1, participatingCount|0));
+      return shuffle(ids.slice()).slice(0, k);
+    }
+
+    function computeBounds(groupRadius){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      const left = groupRadius + 10;
+      const right = w - groupRadius - 10;
+      const top = groupRadius + 10;
+      const bottom = h - groupRadius - 10;
+      return {left, right, top, bottom};
+    }
+
+    function distance(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return Math.hypot(dx,dy); }
+
+    function placeGroupCenters(activeIds, cfg){
+      const {minGroups, maxGroups, groupRadius, itemRadius, extraGap} = cfg;
+      const bounds = computeBounds(groupRadius);
+      const minGap = 2*(groupRadius + itemRadius) + extraGap;
+      const centers = [];
+      for (const sid of activeIds){
+        const count = randInt(minGroups, Math.max(minGroups, maxGroups));
+        for (let g=0; g<count; g++){
+          let tries = 0, ok = false, x=0, y=0;
+          while(tries < 400 && !ok){
+            x = randInt(bounds.left, bounds.right);
+            y = randInt(bounds.top, bounds.bottom);
+            ok = centers.every(c => distance(c.x,c.y,x,y) >= minGap);
+            tries++;
+          }
+          if (ok) centers.push({x,y, sid});
+        }
+      }
+      return centers;
+    }
+
+    function generateItemsForCenter(cx, cy, need, cfg){
+      const {groupRadius, itemRadius} = cfg;
+      const minItemGap = 2*itemRadius;
+      const pts = [];
+      let tries = 0;
+      while (pts.length < need && tries < 2000){
+        const ang = rand()*Math.PI*2;
+        const r = Math.sqrt(rand()) * (groupRadius - itemRadius - 1);
+        const x = cx + Math.cos(ang) * r;
+        const y = cy + Math.sin(ang) * r;
+        let ok = true;
+        for (let i=0;i<pts.length;i++){
+          if (distance(pts[i].x, pts[i].y, x, y) < minItemGap){ ok = false; break; }
+        }
+        if (ok) pts.push({x,y});
+        tries++;
+      }
+      return pts;
+    }
+
+    function drawScene(state){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      ctx.clearRect(0,0,w,h);
+      if (!state) return;
+      // background subtle grid
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1;
+      for (let x=20; x<w; x+=20){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+      for (let y=20; y<h; y+=20){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+      ctx.restore();
+
+      const radius = state.cfg.itemRadius;
+      for (const group of state.groups){
+        // optional: light ring for group radius
+        ctx.beginPath();
+        ctx.arc(group.cx, group.cy, state.cfg.groupRadius, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // draw items
+        const shape = SHAPES.find(s => s.id === group.sid) || SHAPES[0];
+        const color = (state.colorByShape && state.colorByShape.get(group.sid)) || colorForShapeId(group.sid);
+        for (const p of group.items){
+          shape.draw(ctx, p.x, p.y, radius, color);
+        }
+      }
+    }
+
+    let lastState = null;
+    let lastCounts = { bySid: new Map(), total: 0 };
+
+    function buildAndDraw(){
+      const minGroups = +ui.minGroups.value|0; const maxGroups = +ui.maxGroups.value|0;
+      const minPerGroup = +ui.minPerGroup.value|0; const maxPerGroup = +ui.maxPerGroup.value|0;
+      const participatingCount = +ui.participatingCount.value|0;
+      const groupRadius = +ui.groupRadius.value|0; const itemRadius = +ui.itemRadius.value|0; const extraGap = +ui.extraGap.value|0;
+
+      // Invariants
+      if (maxGroups < minGroups) ui.maxGroups.value = String(minGroups);
+      if (maxPerGroup < minPerGroup) ui.maxPerGroup.value = String(minPerGroup);
+
+      const cfg = { minGroups: +ui.minGroups.value|0, maxGroups: +ui.maxGroups.value|0, minPerGroup: +ui.minPerGroup.value|0, maxPerGroup: +ui.maxPerGroup.value|0, participatingCount, groupRadius, itemRadius, extraGap };
+
+      const activeIds = pickActiveTypes(selectedShapeIds, cfg.participatingCount);
+      const centers = placeGroupCenters(activeIds, cfg);
+      // Ensure same item count per shape type across its groups
+      const countByType = Object.fromEntries(activeIds.map(sid => [sid, randInt(cfg.minPerGroup, Math.max(cfg.minPerGroup, cfg.maxPerGroup))]));
+      const groups = centers.map(c => {
+        const need = countByType[c.sid] ?? cfg.minPerGroup;
+        const items = generateItemsForCenter(c.x, c.y, need, cfg);
+        return { sid: c.sid, cx: c.x, cy: c.y, items };
+      });
+
+      // Per-round distinct light colors for active types
+      const palette = generateLightPalette(activeIds.length);
+      const colorByShape = new Map();
+      activeIds.forEach((sid, i) => colorByShape.set(sid, palette[i]));
+
+      lastState = { cfg, activeIds, groups, colorByShape };
+      drawScene(lastState);
+      renderAnswerBar(lastState);
+    }
+
+    function computeCounts(state){
+      const bySid = new Map();
+      let total = 0;
+      for (const sid of state.activeIds){ bySid.set(sid, 0); }
+      for (const g of state.groups){
+        const prev = bySid.get(g.sid) || 0;
+        bySid.set(g.sid, prev + g.items.length);
+        total += g.items.length;
+      }
+      return { bySid, total };
+    }
+
+    function renderAnswerBar(state){
+      answersRow.innerHTML = '';
+      lastCounts = computeCounts(state);
+
+      // Per-shape inputs
+      for (const sid of state.activeIds){
+        const wrap = document.createElement('div');
+        wrap.className = 'ans-field';
+
+        const mini = document.createElement('canvas');
+        mini.className = 'mini'; mini.width = 28; mini.height = 28;
+        const mctx = mini.getContext('2d');
+        const shape = SHAPES.find(s => s.id === sid) || SHAPES[0];
+        const color = (state.colorByShape && state.colorByShape.get(sid)) || colorForShapeId(sid);
+        shape.draw(mctx, 14, 14, 10, color);
+
+        const input = document.createElement('input');
+        input.type = 'number'; input.min = '0'; input.className = 'num small';
+        input.setAttribute('data-sid', sid);
+
+        wrap.appendChild(mini);
+        wrap.appendChild(input);
+        answersRow.appendChild(wrap);
+      }
+
+      // Total input
+      const totalWrap = document.createElement('div');
+      totalWrap.className = 'ans-field';
+      const lbl = document.createElement('div'); lbl.className = 'label'; lbl.textContent = 'Всего фигур:';
+      const totalInput = document.createElement('input'); totalInput.type = 'number'; totalInput.min = '0'; totalInput.className = 'num small'; totalInput.id = 'totalInput';
+      totalWrap.appendChild(lbl); totalWrap.appendChild(totalInput);
+      answersRow.appendChild(totalWrap);
+
+      // Check button and result
+      const btn = document.createElement('button'); btn.textContent = 'Проверить'; btn.className = 'btn'; btn.id = 'btn-check';
+      const result = document.createElement('div'); result.id = 'checkResult'; result.className = 'result';
+      const endWrap = document.createElement('div'); endWrap.style.display = 'flex'; endWrap.style.alignItems = 'center'; endWrap.style.gap = '8px';
+      endWrap.appendChild(btn); endWrap.appendChild(result);
+      answersRow.appendChild(endWrap);
+
+      btn.addEventListener('click', () => validateAnswers(result));
+    }
+
+    function validateAnswers(resultNode){
+      let allCorrect = true;
+      // Per-shape
+      for (const [sid, correct] of lastCounts.bySid.entries()){
+        const input = answersRow.querySelector(`input[data-sid="${sid}"]`);
+        if (!input) continue;
+        const val = Number(input.value || '');
+        const ok = Number.isFinite(val) && val === correct;
+        input.classList.remove('valid','invalid');
+        input.classList.add(ok ? 'valid' : 'invalid');
+        if (!ok) allCorrect = false;
+      }
+      // Total
+      const totalInput = document.getElementById('totalInput');
+      if (totalInput){
+        const val = Number(totalInput.value || '');
+        const ok = Number.isFinite(val) && val === lastCounts.total;
+        totalInput.classList.remove('valid','invalid');
+        totalInput.classList.add(ok ? 'valid' : 'invalid');
+        if (!ok) allCorrect = false;
+      }
+      resultNode.textContent = allCorrect ? 'Верно!' : 'Есть ошибки';
+      resultNode.className = 'result ' + (allCorrect ? 'ok' : 'err');
+    }
+
+    function openSettings(){ overlay.style.display = 'flex'; }
+    function closeSettings(){ overlay.style.display = 'none'; }
+
+    btnNew.addEventListener('click', () => { closeSettings(); buildAndDraw(); });
+    btnSettings.addEventListener('click', () => { openSettings(); });
+    btnCancel.addEventListener('click', () => { closeSettings(); });
+    btnApply.addEventListener('click', () => { closeSettings(); buildAndDraw(); });
+    btnRandomize.addEventListener('click', () => {
+      ui.minGroups.value = String(randInt(1,3));
+      ui.maxGroups.value = String(randInt(+ui.minGroups.value, +ui.minGroups.value + 3));
+      ui.minPerGroup.value = String(randInt(1,3));
+      ui.maxPerGroup.value = String(randInt(+ui.minPerGroup.value, +ui.minPerGroup.value + 4));
+      ui.participatingCount.value = String(randInt(1, Math.min(4, SHAPES.length)));
+      ui.groupRadius.value = String(randInt(50, 90));
+      ui.itemRadius.value = String(randInt(10, 16));
+      ui.extraGap.value = String(randInt(4, 12));
+    });
+
+    // Init
+    renderShapeGrid();
+    resizeCanvas();
+    openSettings();
+  </script>
+</body>
+</html>
+
+

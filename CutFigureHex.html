@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CutFigureHex — разрезай шестиугольники</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.1)), url('f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(110,142,251,0.8), rgba(167,119,227,0.3));
+            z-index: -1;
+        }
+        .container {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 30px 40px 40px 40px;
+            width: min(1100px, 96vw);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        .settings {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .settings label { margin-right: 8px; }
+        .board-wrap {
+            position: relative;
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px 0 rgba(31,38,135,0.15);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px;
+        }
+        svg#hexBoard { background: #fff; border: 2px solid #222; border-radius: 6px; }
+        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin-left: 12px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        .back-button:hover { transform: scale(1.1); }
+        .mode-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 6px 12px rgba(255, 107, 107, 0.4);
+        }
+        .hint { margin-top: 10px; font-size: 0.95em; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">CutFigureHex — шестиугольная сетка <a href="index.html" class="back-button">←</a></div>
+        <div class="mode-buttons">
+            <button class="mode-btn" onclick="location.href='CutFigure.html'">Квадраты</button>
+            <button class="mode-btn" onclick="location.href='CutFigureTriangle.html'">Треугольники</button>
+            <button class="mode-btn active" onclick="location.href='CutFigureHex.html'">Шестиугольники</button>
+        </div>
+        <div class="settings">
+            <label>Шестиугольников в части:
+                <input type="number" id="cellsPerPart" min="2" max="200" value="5" style="width:70px;">
+            </label>
+            <label>Частей:
+                <select id="partsCount">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </label>
+            <label>Цвет:
+                <input type="color" id="figColor" value="#ff6666">
+            </label>
+            <button id="regenBtn" style="background:linear-gradient(to right,#00c6ff,#0072ff);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px #00c6ff44;">Сгенерировать</button>
+        </div>
+        <div class="board-wrap">
+            <svg id="hexBoard" width="800" height="600"></svg>
+        </div>
+        <div class="hint">Клик по рёбрам — поставить/убрать утолщённую линию.</div>
+    </div>
+    <script>
+    const svg = document.getElementById('hexBoard');
+    const colorInput = document.getElementById('figColor');
+    const cellsPerPartInput = document.getElementById('cellsPerPart');
+    const partsCountSelect = document.getElementById('partsCount');
+    const regenBtn = document.getElementById('regenBtn');
+
+    const EDGE_THIN = 1, EDGE_THICK = 4;
+    const a = 28; // радиус (расстояние от центра до вершины)
+    const w = 2 * a; // ширина
+    const h = Math.sqrt(3) * a; // высота
+    let figureColor = colorInput.value;
+
+    // Используем осевые координаты (q, r) для шестиугольной решётки (ориентация "остроконечная")
+    // Центр гекса: C(q,r) -> в пикселях
+    function hexCenter(q, r){
+        const x = a * (Math.sqrt(3) * q + Math.sqrt(3)/2 * r);
+        const y = a * (3/2 * r);
+        return {x, y};
+    }
+    function hexPolygonPoints(q, r){
+        const {x: cx, y: cy} = hexCenter(q, r);
+        const pts = [];
+        for(let i=0;i<6;i++){
+            const angle = Math.PI/180 * (60 * i - 30); // остроугольная ориентация
+            const x = cx + a * Math.cos(angle);
+            const y = cy + a * Math.sin(angle);
+            pts.push(`${x},${y}`);
+        }
+        return pts.join(' ');
+    }
+    const dirs = [ [1,0], [1,-1], [0,-1], [-1,0], [-1,1], [0,1] ]; // соседние направления в осевых координатах
+    const k = (q,r)=>`${q},${r}`;
+
+    // Генерация одной связной части из n гексов
+    function genHexPart(n){
+        const set = new Set();
+        set.add(k(0,0));
+        let frontier = [[0,0]];
+        while(set.size < n){
+            const [q,r] = frontier[Math.floor(Math.random()*frontier.length)];
+            const neigh = dirs
+                .map(([dq,dr])=>[q+dq, r+dr])
+                .filter(([qq,rr])=>!set.has(k(qq,rr)));
+            if(neigh.length===0){
+                frontier = Array.from(set).map(s=>s.split(',').map(Number));
+                continue;
+            }
+            const [nq,nr] = neigh[Math.floor(Math.random()*neigh.length)];
+            set.add(k(nq,nr));
+            frontier.push([nq,nr]);
+        }
+        return Array.from(set).map(s=>{const [q,r]=s.split(',').map(Number); return {q,r};});
+    }
+    function normalizeHex(coords){
+        const minQ = Math.min(...coords.map(p=>p.q));
+        const minR = Math.min(...coords.map(p=>p.r));
+        return coords.map(p=>({q:p.q-minQ, r:p.r-minR}));
+    }
+
+    // Повороты гекса не меняют сетку: допустим только 0° (для простоты первой версии)
+    function rotateHex(coords, times){
+        return normalizeHex(coords);
+    }
+
+    function tryPlaceHex(part, occupied){
+        const offsets = [];
+        for(let dq=-20; dq<=20; dq++){
+            for(let dr=-20; dr<=20; dr++) offsets.push([dq,dr]);
+        }
+        for(let i=offsets.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [offsets[i],offsets[j]]=[offsets[j],offsets[i]]; }
+        for(const [oq,or] of offsets){
+            let overlap=false, touch=false;
+            for(const p of part){
+                const qq=p.q+oq, rr=p.r+or;
+                const kk=k(qq,rr);
+                if(occupied.has(kk)){ overlap=true; break; }
+                if(!touch){
+                    for(const [dq,dr] of dirs){
+                        if(occupied.has(k(qq+dq, rr+dr))){ touch=true; break; }
+                    }
+                }
+            }
+            if(!overlap && (occupied.size===0 || touch)) return {ok:true, oq, or};
+        }
+        return {ok:false};
+    }
+
+    let placed = [];
+    let thickEdges = new Set(); // ключи рёбер по канонической паре вершин
+
+    function assembleHexFigure(cellsPerPart, parts){
+        const base = genHexPart(cellsPerPart);
+        placed = [];
+        const occ = new Set();
+        for(let pid=0; pid<parts; pid++){
+            const variant = rotateHex(base, 0);
+            const place = tryPlaceHex(variant, occ);
+            if(!place.ok){ return assembleHexFigure(cellsPerPart, parts); }
+            for(const p of variant){
+                const qq=p.q+place.oq, rr=p.r+place.or;
+                occ.add(k(qq,rr));
+                placed.push({q:qq,r:rr});
+            }
+        }
+    }
+
+    function drawFigure(){
+        svg.innerHTML = '';
+        const minQ = Math.min(...placed.map(p=>p.q));
+        const maxQ = Math.max(...placed.map(p=>p.q));
+        const minR = Math.min(...placed.map(p=>p.r));
+        const maxR = Math.max(...placed.map(p=>p.r));
+        const tl = hexCenter(minQ-2, minR-2);
+        const br = hexCenter(maxQ+3, maxR+3);
+        const padX = a; // горизонтальный отступ
+        const padY = a; // вертикальный отступ
+        const width = (br.x - tl.x) + 2*padX;
+        const height = (br.y - tl.y) + 2*padY;
+        svg.setAttribute('width', Math.max(400, width));
+        svg.setAttribute('height', Math.max(300, height));
+        const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+        const offX = padX - tl.x;
+        const offY = padY - tl.y;
+        g.setAttribute('transform', `translate(${offX}, ${offY})`);
+        svg.appendChild(g);
+
+        // базовые многоугольники и тонкие рёбра
+        const edgeMap = new Map(); // canonical edge -> {x1,y1,x2,y2}
+        function addEdge(x1,y1,x2,y2){
+            const k1 = `${x1.toFixed(1)},${y1.toFixed(1)}-${x2.toFixed(1)},${y2.toFixed(1)}`;
+            const k2 = `${x2.toFixed(1)},${y2.toFixed(1)}-${x1.toFixed(1)},${y1.toFixed(1)}`;
+            const key = k1 < k2 ? k1 : k2;
+            if(!edgeMap.has(key)) edgeMap.set(key,{x1,y1,x2,y2});
+        }
+        function polyPointsArray(q, r){
+            const {x: cx, y: cy} = hexCenter(q, r);
+            const pts = [];
+            for(let i=0;i<6;i++){
+                const angle = Math.PI/180 * (60 * i - 30);
+                const x = cx + a * Math.cos(angle);
+                const y = cy + a * Math.sin(angle);
+                pts.push({x,y});
+            }
+            return pts;
+        }
+        for(const p of placed){
+            const ptsStr = hexPolygonPoints(p.q, p.r);
+            const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+            poly.setAttribute('points', ptsStr);
+            poly.setAttribute('fill', figureColor);
+            poly.setAttribute('stroke', '#222');
+            poly.setAttribute('stroke-width', EDGE_THIN);
+            g.appendChild(poly);
+            // рёбра
+            const pts = polyPointsArray(p.q, p.r);
+            for(let i=0;i<6;i++){
+                const a1 = pts[i], a2 = pts[(i+1)%6];
+                addEdge(a1.x, a1.y, a2.x, a2.y);
+            }
+        }
+        // толстые кликабельные рёбра поверх
+        edgeMap.forEach((e, key)=>{
+            const thick = document.createElementNS('http://www.w3.org/2000/svg','line');
+            thick.setAttribute('x1', e.x1); thick.setAttribute('y1', e.y1);
+            thick.setAttribute('x2', e.x2); thick.setAttribute('y2', e.y2);
+            thick.setAttribute('stroke', '#111');
+            thick.setAttribute('stroke-width', EDGE_THICK);
+            thick.setAttribute('stroke-linecap', 'round');
+            thick.setAttribute('opacity', thickEdges.has(key) ? '1' : '0');
+            thick.style.pointerEvents = 'auto';
+            thick.addEventListener('click', ()=>{
+                if(thickEdges.has(key)) { thickEdges.delete(key); thick.setAttribute('opacity','0'); }
+                else { thickEdges.add(key); thick.setAttribute('opacity','1'); }
+            });
+            g.appendChild(thick);
+        });
+    }
+
+    function regenerate(){
+        figureColor = colorInput.value;
+        const per = Math.max(2, Math.min(200, +cellsPerPartInput.value||5));
+        const parts = +partsCountSelect.value;
+        thickEdges.clear();
+        assembleHexFigure(per, parts);
+        drawFigure();
+    }
+
+    colorInput.addEventListener('input', ()=>{ figureColor = colorInput.value; drawFigure(); });
+    partsCountSelect.addEventListener('change', regenerate);
+    regenBtn.addEventListener('click', regenerate);
+    regenerate();
+    </script>
+</body>
+</html>

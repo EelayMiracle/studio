@@ -320,6 +320,7 @@
     
     <!-- Галерея математических игр -->
     <div class="games-gallery" style="margin-top:20px;">
+        <h2 style="text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 20px; font-size: 1.8em;">🧮 Математические игры</h2>
         <button class="nav-btn prev-btn" onclick="scrollGalleryMath(-1)">&#10094;</button>
         <div class="games-container" id="gamesContainerMath">
             <!-- Математика со смайликами -->
@@ -400,8 +401,63 @@
         <button class="nav-btn next-btn" onclick="scrollGalleryMath(1)">&#10095;</button>
     </div>
 
+    <!-- Галерея игр на счет -->
+    <div class="games-gallery" style="margin-top:10px;">
+        <h2 style="text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 20px; font-size: 1.8em;">🎯 Игры на счет и логику</h2>
+        <button class="nav-btn prev-btn" onclick="scrollGalleryCounting(-1)">&#10094;</button>
+        <div class="games-container" id="gamesContainerCounting">
+            <!-- Рыбаки и рыбки -->
+            <div class="game-card" onclick="window.location.href='Fishes/Fishers.html';">
+                <img src="Fishes/заставка.jpeg" alt="Рыбаки и рыбки" class="game-image">
+                <h2 class="game-title">Рыбаки и рыбки</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Посчитай улов рыбаков! Развивай навыки счета и логического мышления.
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Магазинчик -->
+            <div class="game-card" onclick="window.location.href='ShopGame/ShopGame.html';">
+                <img src="ShopGame/обложка.jpg" alt="Магазинчик" class="game-image">
+                <h2 class="game-title">Магазинчик</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Посчитай сколько надо заплатить за покупки! Изучай основы математики в магазине.
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Группы фигур -->
+            <div class="game-card" onclick="window.location.href='MultiplicationGroups.html';">
+                <img src="MultiplicationsGr.jpg" alt="Группы фигур" class="game-image">
+                <h2 class="game-title">Группы фигур</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Сосчитай сколько фигур! Развивай навыки группировки и счета.
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Цветы и пчелы -->
+            <div class="game-card" onclick="window.location.href='BeesAndFlowers/BeesAndFlowers.html';">
+                <img src="BeesAndFlowers/заставка.png" alt="Цветы и пчелы" class="game-image">
+                <h2 class="game-title">Цветы и пчелы</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Сосчитай сколько пыльцы собрали пчелки! Изучай природу и математику.
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+            <!-- Монстрики -->
+            <div class="game-card" onclick="window.location.href='CuteAnimalsScatter/CuteAnimalsScatter.html';">
+                <img src="CuteAnimalsScatter/monsters.jpg" alt="Монстрики" class="game-image">
+                <h2 class="game-title">Монстрики</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Посчитай сколько у них всего ног! Развивай навыки счета с милыми монстриками.
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+        </div>
+        <button class="nav-btn next-btn" onclick="scrollGalleryCounting(1)">&#10095;</button>
+    </div>
+
     <!-- Галерея остальных игр -->
     <div class="games-gallery" style="margin-top:10px;">
+        <h2 style="text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 20px; font-size: 1.8em;">🎮 Развивающие игры</h2>
         <button class="nav-btn prev-btn" onclick="scrollGalleryOther(-1)">&#10094;</button>
         <div class="games-container" id="gamesContainerOther">
             <!-- 3 под подозрением -->
@@ -431,6 +487,15 @@
                     🎯 Цель игры: Набери все числа подряд по памяти!
 					<br>
 					<br>
+                </p>
+                <button class="play-btn">Играть</button>
+            </div>
+			<!-- Разрежь фигуры -->
+            <div class="game-card" onclick="window.location.href='CutFigure.html';">
+                <img src="cutfigure.png" alt="Разрежь фигуры" class="game-image">
+                <h2 class="game-title">Разрежь фигуры</h2>
+                <p class="game-description">
+                    🎯 Цель игры: Проведи границу внутри фигуры и раздели её на одинаковые части! Развивай пространственное мышление.
                 </p>
                 <button class="play-btn">Играть</button>
             </div>
@@ -484,7 +549,7 @@
                 <button class="play-btn">Играть</button>
             </div>
             <!-- Color Me -->
-            <div class="game-card" onclick="window.location.href='https://www.friv4school.com/z/games/colorme/game.html';">
+            <div class="game-card" onclick="window.location.href='colorme.html';">
                 <img src="c1.png" alt="Color Me" class="game-image">
                 <h2 class="game-title">Color Me</h2>
                 <p class="game-description">
@@ -553,6 +618,17 @@
                 container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
             }
         }
+        // Функция для прокрутки галереи игр на счет
+        function scrollGalleryCounting(direction) {
+            const container = document.getElementById('gamesContainerCounting');
+            const scrollAmount = 700;
+            if (direction === -1) {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+        
         // Функция для прокрутки галереи остальных игр
         function scrollGalleryOther(direction) {
             const container = document.getElementById('gamesContainerOther');

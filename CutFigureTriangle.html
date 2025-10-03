@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CutFigureTriangle — разрезай треугольники</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.1)), url('f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(110,142,251,0.8), rgba(167,119,227,0.3));
+            z-index: -1;
+        }
+        .container {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 30px 40px 40px 40px;
+            width: min(1100px, 96vw);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        .settings {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .settings label { margin-right: 8px; }
+        .board-wrap {
+            position: relative;
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px 0 rgba(31,38,135,0.15);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px;
+        }
+        svg#triBoard { background: #fff; border: 2px solid #222; border-radius: 6px; }
+        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin-left: 12px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        .back-button:hover { transform: scale(1.1); }
+        .mode-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 6px 12px rgba(255, 107, 107, 0.4);
+        }
+        .hint { margin-top: 10px; font-size: 0.95em; opacity: 0.9; }
+    </style>
+ </head>
+ <body>
+    <div class="container">
+        <div class="title">CutFigureTriangle — треугольная сетка <a href="index.html" class="back-button">←</a></div>
+        <div class="mode-buttons">
+            <button class="mode-btn" onclick="location.href='CutFigure.html'">Квадраты</button>
+            <button class="mode-btn active" onclick="location.href='CutFigureTriangle.html'">Треугольники</button>
+            <button class="mode-btn" onclick="location.href='CutFigureHex.html'">Шестиугольники</button>
+        </div>
+        <div class="settings">
+            <label>Треугольников в части:
+                <input type="number" id="cellsPerPart" min="2" max="60" value="6" style="width:70px;">
+            </label>
+            <label>Частей:
+                <select id="partsCount">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </label>
+            <label>Цвет:
+                <input type="color" id="figColor" value="#ff6666">
+            </label>
+            <button id="regenBtn" style="background:linear-gradient(to right,#00c6ff,#0072ff);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px #00c6ff44;">Сгенерировать</button>
+        </div>
+        <div class="board-wrap">
+            <svg id="triBoard" width="800" height="600"></svg>
+        </div>
+        <div class="hint">Клик по рёбрам — поставить/убрать утолщённую линию.</div>
+    </div>
+    <script>
+    const svg = document.getElementById('triBoard');
+    const colorInput = document.getElementById('figColor');
+    const cellsPerPartInput = document.getElementById('cellsPerPart');
+    const partsCountSelect = document.getElementById('partsCount');
+    const regenBtn = document.getElementById('regenBtn');
+
+    const EDGE_THIN = 1, EDGE_THICK = 4;
+    const a = 36; // сторона треугольника в пикселях
+    const h = Math.sqrt(3)/2 * a; // высота равностороннего треугольника
+    let figureColor = colorInput.value;
+
+    // Треугольная решётка через базисные вектора:
+    // P(i,j) = i*(a,0) + j*(a/2, h)
+    function P(i,j){ return { x: i*a + j*(a/2), y: j*h }; }
+    function triPolygonPoints(i,j,up){
+        if (up) {
+            const A = P(i, j);
+            const B = P(i+1, j);
+            const C = P(i, j+1);
+            return `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`;
+        } else {
+            const A = P(i+1, j+1);
+            const B = P(i+1, j);
+            const C = P(i, j+1);
+            return `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`;
+        }
+    }
+    function neighbors(i,j,up){
+        // Соседи по общей стороне (противоположной ориентации)
+        if (up) return [ [i, j, false], [i-1, j, false], [i, j-1, false] ];
+        // down
+        return [ [i, j, true], [i+1, j, true], [i, j+1, true] ];
+    }
+    const k = (r,c,u)=>`${r},${c},${u?1:0}`;
+
+    // Генерация одной части (связное треугольное полимино)
+    function genTriPart(n){
+        const set = new Set();
+        set.add(k(0,0,true));
+        let frontier = [[0,0,true]];
+        while(set.size < n){
+            const [r,c,u] = frontier[Math.floor(Math.random()*frontier.length)];
+            const neigh = neighbors(r,c,u).filter(([rr,cc,uu])=>!set.has(k(rr,cc,uu)));
+            if(neigh.length===0){ frontier = Array.from(set).map(s=>{const [rr,cc,uu]=s.split(',');return [parseInt(rr),parseInt(cc),uu==='1'];}); continue; }
+            const [nr,nc,nu] = neigh[Math.floor(Math.random()*neigh.length)];
+            set.add(k(nr,nc,nu));
+            frontier.push([nr,nc,nu]);
+        }
+        return Array.from(set).map(s=>{const [r,c,u]=s.split(',');return {r:parseInt(r),c:parseInt(c),up:u==='1'};});
+    }
+    function normalizeTri(coords){
+        const minR = Math.min(...coords.map(p=>p.r));
+        const minC = Math.min(...coords.map(p=>p.c));
+        return coords.map(p=>({r:p.r-minR,c:p.c-minC,up:p.up}));
+    }
+    // повороты на 120°/240°/360° для треугольной решётки сложны; на первом шаге допустим только 0° и 180° (переворот ориент. ▲/▼ без зеркал)
+    function rotateTri(coords, times){
+        // В первой версии оставим только 0° (без поворота), чтобы исключить ошибки наложения
+        return normalizeTri(coords);
+    }
+    function tryPlaceTri(part, occupied){
+        const offsets=[]; for(let dr=-20;dr<=20;dr++) for(let dc=-20;dc<=20;dc++) offsets.push([dr,dc]);
+        for(let i=offsets.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [offsets[i],offsets[j]]=[offsets[j],offsets[i]]; }
+        for(const [dr,dc] of offsets){
+            let overlap=false, touch=false;
+            for(const p of part){
+                const rr=p.r+dr, cc=p.c+dc, uu=p.up;
+                const kk=k(rr,cc,uu);
+                if(occupied.has(kk)){ overlap=true; break; }
+                if(!touch){
+                    for(const [nr,nc,nu] of neighbors(rr,cc,uu)){
+                        if(occupied.has(k(nr,nc,nu))){ touch=true; break; }
+                    }
+                }
+            }
+            if(!overlap && (occupied.size===0 || touch)) return {ok:true,dr,dc};
+        }
+        return {ok:false};
+    }
+
+    let placed = []; // массив треугольников фигуры
+    let thickEdges = new Set(); // ключ по рёбрам (узлы A-B) в экранных координатах
+
+    function assembleTriFigure(cellPerPart, parts){
+        const base = genTriPart(cellPerPart);
+        placed = [];
+        const occ = new Set();
+        for(let pid=0; pid<parts; pid++){
+            const rot = Math.floor(Math.random()*2); // 0° или 180°
+            const variant = rotateTri(base, rot);
+            const place = tryPlaceTri(variant, occ);
+            if(!place.ok){ return assembleTriFigure(cellPerPart, parts); }
+            for(const p of variant){
+                const rr=p.r+place.dr, cc=p.c+place.dc, uu=p.up;
+                occ.add(k(rr,cc,uu));
+                placed.push({r:rr,c:cc,up:uu});
+            }
+        }
+    }
+
+    function drawFigure(){
+        svg.innerHTML = '';
+        // авторазмер
+        const minR = Math.min(...placed.map(p=>p.r)), maxR = Math.max(...placed.map(p=>p.r));
+        const minC = Math.min(...placed.map(p=>p.c)), maxC = Math.max(...placed.map(p=>p.c));
+        const topLeft = P(minC, minR);
+        const bottomRight = P(maxC+2, maxR+2);
+        const width = bottomRight.x - topLeft.x + a;
+        const height = bottomRight.y - topLeft.y + a;
+        svg.setAttribute('width', Math.max(400, width));
+        svg.setAttribute('height', Math.max(300, height));
+        const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+        g.setAttribute('transform', `translate(${a/2}, ${a/2})`);
+        svg.appendChild(g);
+
+        // базовые тонкие рёбра + заливки
+        for(const p of placed){
+            const pts = triPolygonPoints(p.c - minC + 1, p.r - minR + 1, p.up);
+            const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+            poly.setAttribute('points', pts);
+            poly.setAttribute('fill', figureColor);
+            poly.setAttribute('stroke', '#222');
+            poly.setAttribute('stroke-width', EDGE_THIN);
+            g.appendChild(poly);
+        }
+
+        // кликабельные толстые рёбра: храним по парам вершин (x1,y1)-(x2,y2)
+        // построим рёбра каждого треугольника и наложим поверх прозрачные линии
+        const edgeMap = new Map(); // canonical key -> {x1,y1,x2,y2}
+        function addEdge(x1,y1,x2,y2){
+            // канонический порядок концов
+            const k1 = `${x1.toFixed(1)},${y1.toFixed(1)}-${x2.toFixed(1)},${y2.toFixed(1)}`;
+            const k2 = `${x2.toFixed(1)},${y2.toFixed(1)}-${x1.toFixed(1)},${y1.toFixed(1)}`;
+            const key = k1 < k2 ? k1 : k2;
+            if(!edgeMap.has(key)) edgeMap.set(key,{x1,y1,x2,y2});
+        }
+        function addPolyEdges(ptsStr){
+            const pts = ptsStr.split(' ').map(s=>{const [x,y]=s.split(',').map(Number); return {x,y};});
+            for(let i=0;i<3;i++){
+                const a = pts[i], b = pts[(i+1)%3];
+                addEdge(a.x,a.y,b.x,b.y);
+            }
+        }
+        for(const p of placed){
+            addPolyEdges(triPolygonPoints(p.c - minC + 1, p.r - minR + 1, p.up));
+        }
+        // рендер толстых переключаемых линий
+        edgeMap.forEach((e,key)=>{
+            const thick = document.createElementNS('http://www.w3.org/2000/svg','line');
+            thick.setAttribute('x1', e.x1); thick.setAttribute('y1', e.y1);
+            thick.setAttribute('x2', e.x2); thick.setAttribute('y2', e.y2);
+            thick.setAttribute('stroke', '#111');
+            thick.setAttribute('stroke-width', EDGE_THICK);
+            thick.setAttribute('stroke-linecap', 'round');
+            thick.setAttribute('opacity', thickEdges.has(key) ? '1' : '0');
+            thick.style.pointerEvents = 'auto';
+            thick.addEventListener('click', ()=>{
+                if(thickEdges.has(key)) { thickEdges.delete(key); thick.setAttribute('opacity','0'); }
+                else { thickEdges.add(key); thick.setAttribute('opacity','1'); }
+            });
+            g.appendChild(thick);
+        });
+    }
+
+    function regenerate(){
+        figureColor = colorInput.value;
+        const per = Math.max(2, Math.min(200, +cellsPerPartInput.value||6));
+        const parts = +partsCountSelect.value;
+        thickEdges.clear();
+        assembleTriFigure(per, parts);
+        drawFigure();
+    }
+
+    colorInput.addEventListener('input', ()=>{ figureColor = colorInput.value; drawFigure(); });
+    partsCountSelect.addEventListener('change', regenerate);
+    regenBtn.addEventListener('click', regenerate);
+    regenerate();
+    </script>
+ </body>
+ </html>
+
+
