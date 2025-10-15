@@ -444,15 +444,15 @@
             <button id="new-game-btn" class="new-game-btn">Новая игра</button>
         </div>
         
+        <!-- Сообщение о победе над задуманным рисунком -->
+        <div class="victory-message-area" id="victory-message-area" style="min-height: 60px; margin: 15px 0; display: flex; justify-content: center; align-items: center;"></div>
+        
         <div class="target-pattern" id="target-pattern" style="display: none;">
             <h3>Воссоздайте этот рисунок:</h3>
             <div class="target-grid" id="target-grid"></div>
         </div>
         
         <div class="game-message" id="game-message">Нажмите "Новая игра" чтобы начать!</div>
-        
-        <!-- Зарезервированное место для сообщения о победе -->
-        <div class="victory-message-area" id="victory-message-area" style="min-height: 60px; margin: 15px 0; display: flex; justify-content: center; align-items: center;"></div>
         
         <div class="game-area" id="game-area" style="display: none;">
             <div class="game-grid" id="game-grid"></div>
@@ -461,6 +461,7 @@
         <div class="controls">
             <button id="undo-btn" style="display: none;">Отменить</button>
             <button id="clear-btn" style="display: none;">Очистить</button>
+            <button id="new-game-during-btn" class="new-game-btn" style="display: none;">Новая игра</button>
             <button id="new-game-win-btn" class="new-game-btn" style="display: none;">Новая игра</button>
         </div>
     </div>
@@ -487,6 +488,7 @@
         const gridWidthInput = document.getElementById('grid-width');
         const gridHeightInput = document.getElementById('grid-height');
         const newGameBtn = document.getElementById('new-game-btn');
+        const newGameDuringBtn = document.getElementById('new-game-during-btn');
         const newGameWinBtn = document.getElementById('new-game-win-btn');
         const undoBtn = document.getElementById('undo-btn');
         const clearBtn = document.getElementById('clear-btn');
@@ -534,12 +536,13 @@
             gameArea.style.display = 'block';
             undoBtn.style.display = 'inline-block';
             clearBtn.style.display = 'inline-block';
+            newGameDuringBtn.style.display = 'inline-block';
             newGameWinBtn.style.display = 'none';
             
             gameState.isGameActive = true;
             gameMessage.textContent = "Воссоздайте показанный рисунок!";
             
-            // Очищаем область победного сообщения, но оставляем её видимой для резервирования места
+            // Очищаем область победного сообщения
             const victoryArea = document.getElementById('victory-message-area');
             victoryArea.innerHTML = '';
             
@@ -870,7 +873,7 @@
             if (checkPattern()) {
                 gameState.isGameActive = false;
                 
-                // Показываем поздравление в зарезервированной области
+                // Показываем поздравление над задуманным рисунком
                 const victoryArea = document.getElementById('victory-message-area');
                 victoryArea.innerHTML = `<div class="victory-message">Поздравляем! Вы выиграли за ${gameState.moves} ходов!</div>`;
                 
@@ -880,6 +883,7 @@
                 // Скрываем кнопки управления и показываем кнопку новой игры
                 undoBtn.style.display = 'none';
                 clearBtn.style.display = 'none';
+                newGameDuringBtn.style.display = 'none';
                 newGameWinBtn.style.display = 'inline-block';
             } else {
                 gameMessage.textContent = `Попробуйте еще! (Ходов: ${gameState.moves})`;
@@ -931,6 +935,7 @@
 
         // Слушатели событий
         newGameBtn.addEventListener('click', initGame);
+        newGameDuringBtn.addEventListener('click', initGame);
         newGameWinBtn.addEventListener('click', initGame);
         undoBtn.addEventListener('click', undoLastMove);
         clearBtn.addEventListener('click', clearField);

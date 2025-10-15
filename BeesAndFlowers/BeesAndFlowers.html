@@ -37,10 +37,11 @@
     .panel { width:min(900px,96vw); max-height:92vh; overflow:auto; background:#ffffff; color:#182230; border:1px solid #d8dde7; border-radius:14px; padding:16px; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
     .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
     .field { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:10px; }
-    .num { width:84px; padding:8px 10px; border-radius:8px; border:1px solid #c0c9e2; }
+    .num { width:42px; padding:8px 10px; border-radius:8px; border:1px solid #c0c9e2; }
     .flowers { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; }
     .tile { background:#f6f8fe; border:1px solid #dbe3f7; border-radius:12px; padding:10px; display:grid; gap:6px; user-select:none; }
     .tile img { width:48px; height:48px; object-fit:contain; justify-self:center; }
+    .tile.active { border-color:#2b68e5; background:#e6f0ff; }
   </style>
 </head>
 <body>
@@ -81,7 +82,7 @@
       <div class="grid">
         <div class="field">
           <label>Сколько типов цветов участвует</label>
-          <input id="participatingCount" class="num" type="number" min="1" max="7" value="4">
+          <input id="participatingCount" class="num" type="number" min="1" max="8" value="4">
         </div>
         <div class="field">
           <label>Радиус элемента (px)</label>
@@ -104,6 +105,8 @@
           <input id="scalePercent" class="num" type="number" min="50" max="300" value="100">
         </div>
       </div>
+      <h4 style="margin:12px 0 8px 0;">Выберите фон:</h4>
+      <div id="backgroundTiles" class="flowers" style="grid-template-columns: repeat(3, minmax(0,1fr)); margin-bottom:16px;"></div>
       <h4 style="margin:12px 0 8px 0;">Выберите типы цветов и задайте мин/макс и значение пыльцы:</h4>
       <div id="flowerTiles" class="flowers"></div>
       <div class="panel-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
@@ -121,7 +124,7 @@
     const wrap = document.querySelector('.canvas-wrap');
     const legendEl = document.getElementById('legend');
     // Ширина левой зоны под пчёл и их миниатюры, куда нельзя ставить цветы
-    const EXCLUDE_LEFT_PX = 200;
+    const EXCLUDE_LEFT_PX = 120;
     // Параметры пчёл и миниатюр для расчётов зон
     const BEE_BASE_R = Math.round(28 * 1.5); // фикс радиус пчелы (px)
     const MINI_SIZE = 28; const MINI_GAP = 8;
@@ -177,6 +180,13 @@
     const inpRemain = document.getElementById('inpRemain');
     const inpBees = document.getElementById('inpBees');
 
+    function updateBackground(){
+      const selectedBg = BACKGROUNDS.find(bg => bg.id === currentBackground);
+      if (selectedBg) {
+        stage.style.backgroundImage = `url('${selectedBg.src}')`;
+      }
+    }
+
     function openSettings(){ overlay.style.display = 'flex'; }
     function closeSettings(){ overlay.style.display = 'none'; }
 
@@ -203,14 +213,52 @@
       { id:'f5', name:'Цветок 5', src:'Без имени-5.png' },
       { id:'f6', name:'Цветок 6', src:'Без имени-6.png' },
       { id:'f7', name:'Цветок 7', src:'Без имени-7.png' },
+      { id:'f8', name:'Цветок 8', src:'Без имени-8.png' },
     ];
     const BEES = [
       { id:'bee1', name:'Пчела 1', src:'bee1.png' },
       { id:'bee2', name:'Пчела 2', src:'bee2.png' },
     ];
+    
+    // Фоны
+    const BACKGROUNDS = [
+      { id:'bg1', name:'Трава', src:'grass.jpg' },
+      { id:'bg2', name:'Фон 2', src:'фон 2.jpg' },
+      { id:'bg3', name:'Фон 3', src:'фон 3.jpg' },
+    ];
 
     // Настройка по типам: выбран/ мин/макс/ значение пыльцы
     const perFlower = new Map(FLOWER_TYPES.map(f => [f.id, { selected:true, min:3, max:6, value:1 }]));
+    
+    // Текущий выбранный фон
+    let currentBackground = 'bg1';
+
+    function renderBackgroundTiles(){
+      const backgroundTiles = document.getElementById('backgroundTiles');
+      backgroundTiles.innerHTML = '';
+      BACKGROUNDS.forEach(bg => {
+        const tile = document.createElement('div'); 
+        tile.className = 'tile' + (currentBackground === bg.id ? ' active' : '');
+        tile.style.cursor = 'pointer';
+        const img = document.createElement('img'); 
+        img.src = bg.src; 
+        img.alt = bg.name; 
+        img.style.width = '80px'; 
+        img.style.height = '60px'; 
+        img.style.objectFit = 'cover';
+        tile.appendChild(img);
+        const name = document.createElement('div'); 
+        name.style.textAlign = 'center'; 
+        name.style.fontSize = '12px';
+        name.textContent = bg.name; 
+        tile.appendChild(name);
+        tile.addEventListener('click', () => {
+          currentBackground = bg.id;
+          renderBackgroundTiles();
+        });
+        backgroundTiles.appendChild(tile);
+      });
+    }
 
     function renderFlowerTiles(){
       flowerTiles.innerHTML = '';
@@ -242,12 +290,12 @@
 
     function computeBounds(itemRadius){
       const w = canvas.clientWidth, h = canvas.clientHeight;
-      let left = itemRadius + 10; const right = w - itemRadius - 10;
-      // Ограничиваем появление цветов только нижними 80% холста
-      const top = Math.max(itemRadius + 10, h * 0.2); 
+      // Цветы могут появляться по всей ширине поля
+      const left = itemRadius + 10; 
+      const right = w - itemRadius - 10;
+      // Ограничиваем появление цветов только нижним 70% холста
+      const top = Math.max(itemRadius + 10, h * 0.3); 
       const bottom = h - itemRadius - 10;
-      // исключаем левую полосу для пчёл
-      left = Math.max(left, EXCLUDE_LEFT_PX + itemRadius + 10);
       return {left,right,top,bottom};
     }
 
@@ -261,10 +309,6 @@
       while (pts.length < total && tries < maxTries){
         const x = randInt(bounds.left, bounds.right);
         const y = randInt(bounds.top, bounds.bottom);
-        // запретные зоны: слева сверху и справа сверху
-        const inLeftEx = (x < EXCLUDE_W) && (y < EXCLUDE_H);
-        const inRightEx = (x > w - EXCLUDE_W) && (y < EXCLUDE_H);
-        if (inLeftEx || inRightEx) { tries++; continue; }
         let ok = true;
         for (let i=0;i<pts.length;i++) { if (distance(pts[i].x, pts[i].y, x, y) < gap) { ok=false; break; } }
         if (ok) pts.push({x,y});
@@ -321,6 +365,7 @@
       }
 
       lastState = { activeFlowers, countsByType, items, legend, beeVisits, itemR };
+      updateBackground();
       drawScene(lastState);
       renderLegend();
       renderAnswerPanel();
@@ -475,13 +520,14 @@
     // События
     document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeSettings(); });
     btnNew.addEventListener('click', ()=>{ closeSettings(); buildAndDraw(); });
-    btnSettings.addEventListener('click', ()=>{ openSettings(); renderFlowerTiles(); });
+    btnSettings.addEventListener('click', ()=>{ openSettings(); renderBackgroundTiles(); renderFlowerTiles(); });
     btnCancel.addEventListener('click', ()=> closeSettings());
     btnApply.addEventListener('click', ()=>{ closeSettings(); buildAndDraw(); });
     btnCheck.addEventListener('click', checkAnswers);
     btnShowAnswers.addEventListener('click', showAnswers);
 
     // Init
+    renderBackgroundTiles();
     renderFlowerTiles();
     resizeCanvas();
     buildAndDraw();

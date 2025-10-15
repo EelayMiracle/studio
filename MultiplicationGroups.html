@@ -526,10 +526,28 @@
 
       const activeIds = pickActiveTypes(selectedShapeIds, cfg.participatingCount);
       const centers = placeGroupCenters(activeIds, cfg);
-      // Ensure same item count per shape type across its groups
-      const countByType = Object.fromEntries(activeIds.map(sid => [sid, randInt(cfg.minPerGroup, Math.max(cfg.minPerGroup, cfg.maxPerGroup))]));
+      
+      // Generate different counts for each shape type
+      const countsForTypes = new Map();
+      const usedCounts = new Set();
+      
+      for (const sid of activeIds) {
+        let count;
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        do {
+          count = randInt(cfg.minPerGroup, Math.max(cfg.minPerGroup, cfg.maxPerGroup));
+          attempts++;
+        } while (usedCounts.has(count) && attempts < maxAttempts);
+        
+        // If we couldn't find a unique count, use the generated one anyway
+        usedCounts.add(count);
+        countsForTypes.set(sid, count);
+      }
+      
       const groups = centers.map(c => {
-        const need = countByType[c.sid] ?? cfg.minPerGroup;
+        const need = countsForTypes.get(c.sid) ?? cfg.minPerGroup;
         const items = generateItemsForCenter(c.x, c.y, need, cfg);
         return { sid: c.sid, cx: c.x, cy: c.y, items };
       });

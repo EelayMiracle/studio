@@ -368,12 +368,12 @@
             
             <div class="game-info">
                 <div class="move-info" id="moveInfo">
-                    <span id="lastMoveInfo">Ваш последний ход: <span id="playerLastMove">-</span></span>
-                    <span id="computerMoveInfo">Компьютер взял: <span id="computerMove">-</span> камней</span>
+                    <span id="lastMoveInfo">Ваш последний ход: <span id="playerLastMove">-&nbsp; &nbsp;&nbsp;</span></span>
+                    <span id="computerMoveInfo">&nbsp; &nbsp;Компьютер взял: <span id="computerMove">-</span> камней</span>
                 </div>
                 <div class="move-info" id="twoPlayerMoveInfo" style="display: none;">
                     <span id="player1MoveInfo">Последний ход <span id="player1NameSpan">Игрок 1</span>: <span id="player1LastMove">-</span></span>
-                    <span id="player2MoveInfo">Последний ход <span id="player2NameSpan">Игрок 2</span>: <span id="player2LastMove">-</span></span>
+                    <span id="player2MoveInfo">&nbsp; &nbsp; &nbsp;Последний ход <span id="player2NameSpan">Игрок 2</span>: <span id="player2LastMove">-</span></span>
                 </div>
                 <div class="message" id="message"></div>
             </div>
@@ -426,6 +426,7 @@
         let player1Name = 'Игрок 1';
         let player2Name = 'Игрок 2';
         let playerAddHistory = {}; // отслеживание последних действий каждого игрока
+        let lastAddedAmount = 0; // количество камней, добавленных в последнем ходу
         
         // Обработчики событий
         startGameBtn.addEventListener('click', startGame);
@@ -495,6 +496,7 @@
             currentPlayer = firstPlayer;
             lastActionWasAdd = false;
             buttonsBlocked = false;
+            lastAddedAmount = 0;
             playerAddHistory = {
                 player1: false,
                 player2: false,
@@ -568,14 +570,16 @@
             
             // Кнопки для взятия камней
             const maxPossibleTake = Math.min(maxTake, stonesRemaining);
-            // Всегда можно взять камни
+            // Всегда можно взять камни, но нельзя взять ровно столько, сколько добавил предыдущий игрок
             const canTake = true;
             
             for (let i = 1; i <= maxPossibleTake; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = i;
-                btn.disabled = !canTake;
-                if (canTake) {
+                // Нельзя взять ровно столько камней, сколько добавил предыдущий игрок
+                const isBlocked = lastAddedAmount > 0 && i === lastAddedAmount;
+                btn.disabled = !canTake || isBlocked;
+                if (canTake && !isBlocked) {
                     btn.addEventListener('click', () => playerTurn(i, 'take'));
                 }
                 takeButtons.appendChild(btn);
@@ -618,9 +622,11 @@
             if (action === 'take') {
                 stonesRemaining -= amount;
                 playerAddHistory[currentPlayer] = false;
+                lastAddedAmount = 0; // Сбрасываем, так как взяли камни
             } else {
                 stonesRemaining += amount;
                 playerAddHistory[currentPlayer] = true;
+                lastAddedAmount = amount; // Запоминаем количество добавленных камней
             }
             
             // Обновляем отображение последнего хода
@@ -692,14 +698,22 @@
             
             // Проверяем корректность хода компьютера
             if (action === 'take') {
-                // Компьютер не может взять 0 камней или больше чем доступно
-                if (amount <= 0 || amount > stonesRemaining || amount > maxTake) {
-                    console.error(`Ошибка ИИ: попытка взять ${amount} камней при доступных ${stonesRemaining}`);
-                    // Принудительно берем минимально допустимое количество
-                    amount = Math.min(Math.max(1, amount), Math.min(maxTake, stonesRemaining));
+                // Компьютер не может взять 0 камней, больше чем доступно, больше максимума или ровно столько, сколько добавил предыдущий игрок
+                if (amount <= 0 || amount > stonesRemaining || amount > maxTake || (lastAddedAmount > 0 && amount === lastAddedAmount)) {
+                    console.error(`Ошибка ИИ: попытка взять ${amount} камней при доступных ${stonesRemaining}, lastAdded: ${lastAddedAmount}`);
+                    // Находим допустимое количество для взятия
+                    let validAmount = 1;
+                    for (let i = 1; i <= Math.min(maxTake, stonesRemaining); i++) {
+                        if (i !== lastAddedAmount) {
+                            validAmount = i;
+                            break;
+                        }
+                    }
+                    amount = validAmount;
                 }
                 stonesRemaining -= amount;
                 playerAddHistory['computer'] = false;
+                lastAddedAmount = 0; // Сбрасываем, так как взяли камни
             } else {
                 // Компьютер не может добавить 0 камней или больше максимума
                 if (amount <= 0 || amount > maxTake) {
@@ -709,6 +723,7 @@
                 }
                 stonesRemaining += amount;
                 playerAddHistory['computer'] = true;
+                lastAddedAmount = amount; // Запоминаем количество добавленных камней
             }
             
             const actionText = action === 'take' ? 'взял' : 'добавил';
@@ -735,7 +750,17 @@
                 // Классическая стратегия Баше
                 const remainder = stonesRemaining % (maxTake + 1);
                 if (gameMode === 'normal') {
-                    const takeAmount = remainder === 0 ? Math.min(maxTake, stonesRemaining) : remainder;
+                    let takeAmount = remainder === 0 ? Math.min(maxTake, stonesRemaining) : remainder;
+                    // Проверяем, не заблокировано ли это количество
+                    if (lastAddedAmount > 0 && takeAmount === lastAddedAmount) {
+                        // Ищем альтернативное количество
+                        for (let i = 1; i <= Math.min(maxTake, stonesRemaining); i++) {
+                            if (i !== lastAddedAmount) {
+                                takeAmount = i;
+                                break;
+                            }
+                        }
+                    }
                     return {
                         action: 'take',
                         amount: Math.max(1, Math.min(takeAmount, stonesRemaining)) // Гарантируем корректность
@@ -751,16 +776,32 @@
                             };
                         } else {
                             // Если камней больше 1, но меньше или равно maxTake+1, берем все кроме одного
+                            let takeAmount = stonesRemaining - 1;
+                            // Проверяем, не заблокировано ли это количество
+                            if (lastAddedAmount > 0 && takeAmount === lastAddedAmount) {
+                                takeAmount = 1; // Берем минимум
+                            }
                             return {
                                 action: 'take',
-                                amount: stonesRemaining - 1
+                                amount: takeAmount
                             };
                         }
                     } else {
                         const remainder = stonesRemaining % (maxTake + 1);
+                        let takeAmount = remainder === 0 ? 1 : remainder;
+                        // Проверяем, не заблокировано ли это количество
+                        if (lastAddedAmount > 0 && takeAmount === lastAddedAmount) {
+                            // Ищем альтернативное количество
+                            for (let i = 1; i <= Math.min(maxTake, stonesRemaining); i++) {
+                                if (i !== lastAddedAmount) {
+                                    takeAmount = i;
+                                    break;
+                                }
+                            }
+                        }
                         return {
                             action: 'take',
-                            amount: remainder === 0 ? 1 : remainder
+                            amount: takeAmount
                         };
                     }
                 }
@@ -769,7 +810,17 @@
                 if (playerAddHistory['computer']) {
                     // Обязательно берем
                     const remainder = stonesRemaining % (maxTake + 1);
-                    const takeAmount = remainder === 0 ? Math.min(maxTake, stonesRemaining) : remainder;
+                    let takeAmount = remainder === 0 ? Math.min(maxTake, stonesRemaining) : remainder;
+                    // Проверяем, не заблокировано ли это количество
+                    if (lastAddedAmount > 0 && takeAmount === lastAddedAmount) {
+                        // Ищем альтернативное количество
+                        for (let i = 1; i <= Math.min(maxTake, stonesRemaining); i++) {
+                            if (i !== lastAddedAmount) {
+                                takeAmount = i;
+                                break;
+                            }
+                        }
+                    }
                     return {
                         action: 'take',
                         amount: Math.max(1, Math.min(takeAmount, stonesRemaining)) // Гарантируем что берем от 1 до доступного количества
@@ -784,9 +835,20 @@
                             amount: Math.max(1, Math.floor(Math.random() * maxTake) + 1) // Гарантируем что добавляем минимум 1
                         };
                     } else {
+                        let takeAmount = Math.max(1, Math.min(remainder, stonesRemaining));
+                        // Проверяем, не заблокировано ли это количество
+                        if (lastAddedAmount > 0 && takeAmount === lastAddedAmount) {
+                            // Ищем альтернативное количество
+                            for (let i = 1; i <= Math.min(maxTake, stonesRemaining); i++) {
+                                if (i !== lastAddedAmount) {
+                                    takeAmount = i;
+                                    break;
+                                }
+                            }
+                        }
                         return {
                             action: 'take',
-                            amount: Math.max(1, Math.min(remainder, stonesRemaining)) // Гарантируем корректность
+                            amount: takeAmount // Гарантируем корректность
                         };
                     }
                 }
