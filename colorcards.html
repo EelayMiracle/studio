@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цветная память</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)),
+                url('f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+        
+        .game-container {
+            background-color: rgba(222, 158, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .settings {
+            background-color: #9787FF;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 95%;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .settings label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .settings input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .board-with-coordinates {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .coordinate-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .card-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .coordinate-card {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            opacity: 0.8;
+            pointer-events: none;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .coordinate-card.vertical {
+            width: 40px;
+            height: 80px;
+        }
+        
+        .coordinate-card.horizontal {
+            width: 80px;
+            height: 40px;
+        }
+        
+        .card {
+            width: 80px;
+            height: 80px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 3px solid #333;
+        }
+        
+        .card-front {
+            background-color: #ccc;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        .card.correct {
+            box-shadow: 0 0 15px green;
+        }
+        
+        .card.incorrect {
+            box-shadow: 0 0 15px red;
+        }
+        
+        .dice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .dice {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+        }
+        
+        .dice-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .stat {
+            background-color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 100px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 5px;
+            margin-bottom: 25px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .game-message {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            min-height: 27px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>    
+    <div class="game-container">
+        <h1>Цветная память <a href="index.html" class="back-button">←</a> </h1>
+        <div class="settings">
+            <h2>Настройки игры</h2>
+            <div class="settings-row">
+                <div class="settings-group">
+                    <label for="colors">Количество цветов</label>
+                    <input type="number" id="colors" min="2" max="10" value="4">
+                </div>
+                <div class="settings-group">
+                    <label for="cards-per-color">Карточек на цвет</label>
+                    <input type="number" id="cards-per-color" min="2" max="6" value="4">
+                </div>
+            </div>
+            <button id="start-btn">Начать игру</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">Ошибки: <span id="errors-counter">0</span></div>
+            <div class="stat">Найдено: <span id="found-counter">0</span>/<span id="total-counter">0</span></div>
+        </div>
+        
+        <div class="game-message" id="game-message"></div>
+        
+        <div class="dice-container">
+            <div class="dice-label">Найди цвет:</div>
+            <div class="dice" id="dice">?</div>
+        </div>
+        
+        <div class="board" id="board"></div>
+    </div>
+    <script>
+    // Настройки игры
+    let gameSettings = {
+        colors: 4,
+        cardsPerColor: 4
+    };
+
+    // Состояние игры
+    let gameState = {
+        currentColor: null,
+        errors: 0,
+        foundPairs: 0,
+        totalPairs: 0,
+        canFlip: false,
+        colors: [],
+        lastWrongColor: null,
+        foundColors: {} // Для отслеживания найденных карточек каждого цвета
+    };
+
+    // Цвета для карточек
+    const availableColors = [
+        '#FF5733', '#33FF57', '#3357FF', '#F3FF33', 
+        '#FF33F3', '#33FFF3', '#FF8C33', '#8C33FF',
+        '#33FF8C', '#FF338C'
+    ];
+
+    // Элементы DOM
+    const boardElement = document.getElementById('board');
+    const diceElement = document.getElementById('dice');
+    const errorsCounter = document.getElementById('errors-counter');
+    const foundCounter = document.getElementById('found-counter');
+    const totalCounter = document.getElementById('total-counter');
+    const gameMessage = document.getElementById('game-message');
+    const startBtn = document.getElementById('start-btn');
+    const colorsInput = document.getElementById('colors');
+    const cardsPerColorInput = document.getElementById('cards-per-color');
+
+    // Инициализация игры
+    function initGame() {
+        // Получаем настройки
+        gameSettings.colors = Math.min(10, Math.max(2, parseInt(colorsInput.value) || 4));
+        gameSettings.cardsPerColor = Math.min(6, Math.max(2, parseInt(cardsPerColorInput.value) || 4));
+        
+        // Обновляем значения в полях ввода
+        colorsInput.value = gameSettings.colors;
+        cardsPerColorInput.value = gameSettings.cardsPerColor;
+        
+        // Сбрасываем состояние игры
+        gameState = {
+            currentColor: null,
+            errors: 0,
+            foundPairs: 0,
+            totalPairs: gameSettings.colors * gameSettings.cardsPerColor,
+            canFlip: false,
+            colors: availableColors.slice(0, gameSettings.colors),
+            lastWrongColor: null,
+            foundColors: {}
+        };
+        
+        // Обновляем счетчики
+        updateStats();
+        gameMessage.textContent = "Запоминайте карточки...";
+        
+        // Очищаем доску
+        boardElement.innerHTML = '';
+        
+        // Создаем карточки
+        createCards();
+        
+        // Показываем карточки на 3 секунды
+        showAllCards();
+        setTimeout(() => {
+            hideAllCards();
+            gameMessage.textContent = "Найдите цвет, который выпал на кубике";
+            rollDice();
+        }, 3000);
+    }
+
+    // Создание карточек с координатной разметкой
+    function createCards() {
+        const cards = [];
+        
+        // Создаем карточки для каждого цвета
+        for (let i = 0; i < gameSettings.colors; i++) {
+            for (let j = 0; j < gameSettings.cardsPerColor; j++) {
+                cards.push({
+                    color: gameState.colors[i],
+                    id: `${i}-${j}`
+                });
+            }
+        }
+        
+        // Перемешиваем карточки
+        shuffleArray(cards);
+        
+        // Создаем контейнер для доски с координатами
+        const boardWithCoordinates = document.createElement('div');
+        boardWithCoordinates.className = 'board-with-coordinates';
+        
+        // Создаем массив для хранения карточек с координатами
+        const cardRows = [];
+        const cardsPerRow = gameSettings.colors;
+        
+        // Распределяем карточки по строкам
+        for (let i = 0; i < cards.length; i += cardsPerRow) {
+            const rowCards = cards.slice(i, i + cardsPerRow);
+            cardRows.push(rowCards);
+        }
+        
+        // Добавляем строки с карточками и цифрами слева
+        cardRows.forEach((rowCards, rowIndex) => {
+            const coordinateRow = document.createElement('div');
+            coordinateRow.className = 'coordinate-row';
+            
+            // Добавляем цифру для строки (снизу вверх: 1, 2, 3, 4...)
+            const rowNumberCard = document.createElement('div');
+            rowNumberCard.className = 'coordinate-card vertical';
+            rowNumberCard.textContent = cardRows.length - rowIndex; // Снизу вверх: 1, 2, 3, 4...
+            coordinateRow.appendChild(rowNumberCard);
+            
+            // Добавляем карточки в строку
+            rowCards.forEach((card, colIndex) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.color = card.color;
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.coordinate = `${String.fromCharCode(97 + colIndex)}${cardRows.length - rowIndex}`; // a1, b1, c1...
+                
+                cardElement.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-face card-front"></div>
+                        <div class="card-face card-back" style="background-color: ${card.color}"></div>
+                    </div>
+                `;
+                
+                cardElement.addEventListener('click', () => handleCardClick(cardElement));
+                coordinateRow.appendChild(cardElement);
+            });
+            
+            boardWithCoordinates.appendChild(coordinateRow);
+        });
+        
+        // Добавляем нижнюю строку с буквами (координаты столбцов)
+        const bottomCoordinateRow = document.createElement('div');
+        bottomCoordinateRow.className = 'coordinate-row';
+        
+        // Добавляем пустой элемент для выравнивания с цифрами слева
+        const emptySpace = document.createElement('div');
+        emptySpace.className = 'coordinate-card vertical';
+        emptySpace.style.visibility = 'hidden';
+        bottomCoordinateRow.appendChild(emptySpace);
+        
+        // Добавляем буквы для столбцов (a, b, c, d...)
+        for (let col = 0; col < cardsPerRow; col++) {
+            const coordinateCard = document.createElement('div');
+            coordinateCard.className = 'coordinate-card horizontal';
+            coordinateCard.textContent = String.fromCharCode(97 + col); // a, b, c, d...
+            bottomCoordinateRow.appendChild(coordinateCard);
+        }
+        
+        boardWithCoordinates.appendChild(bottomCoordinateRow);
+        
+        // Очищаем доску и добавляем новую структуру с координатами
+        boardElement.innerHTML = '';
+        boardElement.appendChild(boardWithCoordinates);
+    }
+
+    // Обработчик клика по карточке
+    function handleCardClick(cardElement) {
+        if (!gameState.canFlip || cardElement.classList.contains('flipped')) return;
+        
+        // Переворачиваем карточку
+        cardElement.classList.add('flipped');
+        
+        // Проверяем цвет
+        const cardColor = cardElement.dataset.color;
+        const clickedWrongColor = cardColor !== gameState.currentColor;
+        
+        if (!clickedWrongColor) {
+            // Правильный выбор
+            cardElement.classList.add('correct');
+            gameState.foundPairs++;
+            
+            // Обновляем счетчик найденных карточек этого цвета
+            gameState.foundColors[cardColor] = (gameState.foundColors[cardColor] || 0) + 1;
+            
+            // Если все карточки этого цвета найдены, удаляем цвет из доступных
+            if (gameState.foundColors[cardColor] === gameSettings.cardsPerColor) {
+                gameState.colors = gameState.colors.filter(color => color !== cardColor);
+            }
+            
+            updateStats();
+            
+            // Удаляем обработчик клика
+            cardElement.style.pointerEvents = 'none';
+            
+            // Проверяем завершение игры
+            if (gameState.foundPairs === gameState.totalPairs) {
+                gameState.canFlip = false;
+                gameMessage.textContent = "Поздравляем! Вы выиграли!";
+            } else {
+                // Бросаем кубик снова
+                rollDice();
+            }
+        } else {
+            // Неправильный выбор
+            cardElement.classList.add('incorrect');
+            gameState.errors++;
+            gameState.lastWrongColor = cardColor;
+            updateStats();
+            
+            // Переворачиваем обратно через 1 секунду
+            setTimeout(() => {
+                cardElement.classList.remove('flipped', 'incorrect');
+                
+                // Выбираем новый цвет (любой, кроме только что выбранного неверного и полностью найденных)
+                const availableColors = gameState.colors.filter(color => color !== gameState.lastWrongColor);
+                if (availableColors.length > 0) {
+                    gameState.currentColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+                    diceElement.style.backgroundColor = gameState.currentColor;
+                    diceElement.textContent = '✓';
+                }
+            }, 1000);
+        }
+    }
+
+    // Показать все карточки
+    function showAllCards() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.classList.add('flipped');
+        });
+    }
+
+    // Скрыть все карточки
+    function hideAllCards() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.classList.remove('flipped');
+        });
+        
+        // Разрешаем переворачивать карточки
+        gameState.canFlip = true;
+    }
+
+    // Бросок кубика
+    function rollDice() {
+        // Фильтруем доступные цвета:
+        // 1. Исключаем полностью найденные цвета (они уже удалены из gameState.colors)
+        // 2. Исключаем последний неверный цвет, если он есть
+        const availableColors = gameState.lastWrongColor 
+            ? gameState.colors.filter(color => color !== gameState.lastWrongColor)
+            : gameState.colors;
+        
+        if (availableColors.length === 0) {
+            // Если все цвета исключены (маловероятно), используем все доступные
+            gameState.currentColor = gameState.colors[Math.floor(Math.random() * gameState.colors.length)];
+        } else {
+            const randomIndex = Math.floor(Math.random() * availableColors.length);
+            gameState.currentColor = availableColors[randomIndex];
+        }
+        
+        // Анимация кубика
+        diceElement.textContent = '...';
+        diceElement.style.backgroundColor = gameState.currentColor;
+        
+        setTimeout(() => {
+            diceElement.textContent = '✓';
+        }, 500);
+    }
+
+    // Обновление статистики
+    function updateStats() {
+        errorsCounter.textContent = gameState.errors;
+        foundCounter.textContent = gameState.foundPairs;
+        totalCounter.textContent = gameState.totalPairs;
+    }
+
+    // Перемешивание массива
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Слушатели событий
+    startBtn.addEventListener('click', initGame);
+
+    diceElement.addEventListener('click', () => {
+        if (gameState.canFlip) {
+            rollDice();
+        }
+    });
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+        colorsInput.value = gameSettings.colors;
+        cardsPerColorInput.value = gameSettings.cardsPerColor;
+    });
+    </script>
+</body>
+</html>
