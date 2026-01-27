@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажер: Пересекающиеся области</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+ body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.1)), url('img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(110,142,251,0.8), rgba(167,119,227,0.3));
+            z-index: -1;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .settings {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .level-btn {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .level-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .level-btn.active {
+            background: #007bff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+
+        .settings-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 150px;
+        }
+
+        .settings-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="number"] {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            width: 80px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+        }
+
+        .range-display {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .target-sum {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .target {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .target-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .target-value {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .target-blue .target-value {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196F3;
+            border: 3px solid #2196F3;
+        }
+
+        .target-orange .target-value {
+            background: rgba(255, 152, 0, 0.2);
+            color: #FF9800;
+            border: 3px solid #FF9800;
+        }
+
+        .target-pink .target-value {
+            background: rgba(205, 48, 147, 0.2);
+            color: #CD3093;
+            border: 3px solid #CD3093;
+        }
+
+        .target-current {
+            font-size: 18px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .grid-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        /* Рамки вокруг областей */
+        .blue-outline {
+            position: absolute;
+            border: 4px solid #2196F3;
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+        }
+
+        .orange-outline {
+            position: absolute;
+            border: 4px solid #FF9800;
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+        }
+
+        .pink-outline {
+            position: absolute;
+            border: 4px solid #CD3093;
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(205, 48, 147, 0.3);
+        }
+
+        .grid-wrapper {
+            display: inline-grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .cell {
+            width: 90px;
+            height: 90px;
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+            position: relative;
+            min-height: 90px;
+        }
+
+        .cell.hide {
+            visibility: hidden;
+        }
+
+        /* Синяя область */
+        .blue-area {
+            background: rgba(33, 150, 243, 0.1);
+            border: 3px solid #2196F3;
+        }
+
+        /* Оранжевая область */
+        .orange-area {
+            background: rgba(255, 152, 0, 0.1);
+            border: 3px solid #FF9800;
+        }
+
+        /* Розовая область */
+        .pink-area {
+            background: rgba(205, 48, 147, 0.1);
+            border: 3px solid #CD3093;
+        }
+
+        /* Общие ячейки */
+        .blue-area.orange-area {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 50%, rgba(255, 152, 0, 0.2) 50%);
+            border: 3px solid #FF9800;
+        }
+
+        .blue-area.orange-area::after {
+            content: '';
+            display: block;
+            position: absolute;
+            inset: -3px;
+            border: 3px solid #2196F3;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .orange-area.pink-area {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 50%, rgba(205, 48, 147, 0.2) 50%);
+            border: 3px solid #CD3093;
+        }
+
+        .orange-area.pink-area::after {
+            content: '';
+            display: block;
+            position: absolute;
+            inset: -3px;
+            border: 3px solid #FF9800;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .number-chip {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: grab;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        .number-chip:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .number-chip:active {
+            cursor: grabbing;
+        }
+
+        .number-chip.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .number-chip.in-cell {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        .number-chip.hidden {
+            display: none;
+        }
+
+        .numbers-bank {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            min-height: 100px;
+        }
+
+        .numbers-bank.empty {
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-check {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-check:hover:not(:disabled) {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-check:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-new {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-new:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-reset {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-show-answer {
+            background: #9C27B0;
+            color: white;
+        }
+
+        .btn-show-answer:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
+        }
+
+        .message {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+            min-height: 30px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .message.success {
+            color: #4CAF50;
+            font-weight: bold;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .message.error {
+            color: #f44336;
+            font-weight: bold;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .message.info {
+            color: #2196F3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .cell {
+                width: 70px;
+                height: 70px;
+                min-height: 70px;
+            }
+            
+            .number-chip {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+
+            .grid-wrapper {
+                gap: 6px;
+                padding: 10px;
+            }
+
+            .target-sum {
+                gap: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .settings-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .settings-label {
+                min-width: auto;
+            }
+        }
+		        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тренажер: Пересекающиеся области <a href="index.html" class="back-button">←</a></h1>
+        
+        <div class="level-selector">
+            <button class="level-btn active" onclick="switchLevel(1)">Уровень 1 (2 области)</button>
+            <button class="level-btn" onclick="switchLevel(2)">Уровень 2 (3 области)</button>
+        </div>
+        
+        <div class="settings">
+            <div class="settings-row">
+                <div class="settings-label">Минимальное число:</div>
+                <div class="settings-input">
+                    <input type="number" id="minNum" min="1" max="100" value="1" onchange="updateRangeDisplay()">
+                </div>
+            </div>
+            <div class="settings-row">
+                <div class="settings-label">Максимальное число:</div>
+                <div class="settings-input">
+                    <input type="number" id="maxNum" min="1" max="100" value="10" onchange="updateRangeDisplay()">
+                </div>
+            </div>
+            <div class="settings-row">
+                <div class="settings-label">Количество чисел:</div>
+                <div class="settings-input">
+                    <input type="range" id="numbersCount" min="3" max="7" value="7" onchange="updateNumbersCountDisplay()">
+                    <span class="range-display" id="numbersCountDisplay">7</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="target-sum">
+            <div class="target target-blue">
+                <div class="target-label">Синяя область</div>
+                <div class="target-value" id="targetBlue">0</div>
+                <div class="target-current" id="currentBlue">0 из 0</div>
+            </div>
+            <div class="target target-orange">
+                <div class="target-label">Оранжевая область</div>
+                <div class="target-value" id="targetOrange">0</div>
+                <div class="target-current" id="currentOrange">0 из 0</div>
+            </div>
+        </div>
+
+        <div class="grid-container" id="gridContainer">
+            <!-- Рамки будут добавлены через JavaScript -->
+            <div class="grid-wrapper" id="gridWrapper">
+                <!-- Строка 0 -->
+                <div class="cell blue-area" data-x="0" data-y="0"></div>
+                <div class="cell blue-area" data-x="1" data-y="0"></div>
+                <div class="cell hide"></div>
+                
+                <!-- Строка 1 -->
+                <div class="cell blue-area" data-x="0" data-y="1"></div>
+                <div class="cell blue-area orange-area" data-x="1" data-y="1"></div>
+                <div class="cell orange-area" data-x="2" data-y="1"></div>
+                
+                <!-- Строка 2 -->
+                <div class="cell hide"></div>
+                <div class="cell orange-area" data-x="1" data-y="2"></div>
+                <div class="cell orange-area" data-x="2" data-y="2"></div>
+            </div>
+        </div>
+
+        <div class="numbers-bank" id="numbersBank"></div>
+
+        <div class="controls">
+            <button class="btn-check" onclick="checkSolution()">Проверить</button>
+            <button class="btn-new" onclick="generateNewPuzzle()">Новая задача</button>
+            <button class="btn-reset" onclick="resetPuzzle()">Очистить</button>
+            <button class="btn-show-answer" onclick="showAnswer()">Показать ответ</button>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        let targetBlue = 0;
+        let targetOrange = 0;
+        let targetPink = 0;
+        let currentNumbers = [];
+        let draggedElement = null;
+        let sourceCell = null;
+        let minNum = 1;
+        let maxNum = 10;
+        let numbersCount = 7;
+        let solutionNumbers = [];
+        let solutionPlacement = {};
+        let currentLevel = 1;
+
+        function updateRangeDisplay() {
+            minNum = parseInt(document.getElementById('minNum').value);
+            maxNum = parseInt(document.getElementById('maxNum').value);
+            
+            // Проверяем корректность диапазона
+            if (minNum >= maxNum) {
+                maxNum = minNum + 1;
+                document.getElementById('maxNum').value = maxNum;
+            }
+        }
+
+        function updateNumbersCountDisplay() {
+            numbersCount = parseInt(document.getElementById('numbersCount').value);
+            document.getElementById('numbersCountDisplay').textContent = numbersCount;
+        }
+
+        // Переключение между уровнями
+        function switchLevel(level) {
+            currentLevel = level;
+            
+            // Обновляем активную кнопку
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.level-btn:nth-child(${level})`).classList.add('active');
+            
+            // Обновляем настройки количества чисел
+            const numbersCountInput = document.getElementById('numbersCount');
+            if (level === 1) {
+                numbersCountInput.min = 3;
+                numbersCountInput.max = 7;
+                if (numbersCount > 7) numbersCount = 7;
+            } else {
+                numbersCountInput.min = 3;
+                numbersCountInput.max = 10;
+                if (numbersCount < 3) numbersCount = 3;
+            }
+            numbersCountInput.value = numbersCount;
+            updateNumbersCountDisplay();
+            
+            // Обновляем отображение целевых сумм
+            updateTargetDisplay();
+            
+            // Обновляем сетку
+            updateGrid();
+            
+            // Генерируем новую задачу
+            generateNewPuzzle();
+        }
+
+        // Обновление сетки для разных уровней
+        function updateGrid() {
+            const gridWrapper = document.getElementById('gridWrapper');
+            
+            if (currentLevel === 1) {
+                // Уровень 1: 2 квадрата 2x2, пересекающиеся одним углом
+                gridWrapper.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                gridWrapper.style.gridTemplateRows = 'repeat(3, 1fr)';
+                gridWrapper.innerHTML = `
+                    <!-- Строка 0 -->
+                    <div class="cell blue-area" data-x="0" data-y="0"></div>
+                    <div class="cell blue-area" data-x="1" data-y="0"></div>
+                    <div class="cell hide"></div>
+                    
+                    <!-- Строка 1 -->
+                    <div class="cell blue-area" data-x="0" data-y="1"></div>
+                    <div class="cell blue-area orange-area" data-x="1" data-y="1"></div>
+                    <div class="cell orange-area" data-x="2" data-y="1"></div>
+                    
+                    <!-- Строка 2 -->
+                    <div class="cell hide"></div>
+                    <div class="cell orange-area" data-x="1" data-y="2"></div>
+                    <div class="cell orange-area" data-x="2" data-y="2"></div>
+                `;
+            } else {
+                // Уровень 2: 3 квадрата 2x2, расположенные по диагонали
+                gridWrapper.style.gridTemplateColumns = 'repeat(4, 1fr)';
+                gridWrapper.style.gridTemplateRows = 'repeat(4, 1fr)';
+                gridWrapper.innerHTML = `
+                    <!-- Строка 0 -->
+                    <div class="cell blue-area" data-x="0" data-y="0"></div>
+                    <div class="cell blue-area" data-x="1" data-y="0"></div>
+                    <div class="cell hide"></div>
+                    <div class="cell hide"></div>
+                    
+                    <!-- Строка 1 -->
+                    <div class="cell blue-area" data-x="0" data-y="1"></div>
+                    <div class="cell blue-area orange-area" data-x="1" data-y="1"></div>
+                    <div class="cell orange-area" data-x="2" data-y="1"></div>
+                    <div class="cell hide"></div>
+                    
+                    <!-- Строка 2 -->
+                    <div class="cell hide"></div>
+                    <div class="cell orange-area" data-x="1" data-y="2"></div>
+                    <div class="cell orange-area pink-area" data-x="2" data-y="2"></div>
+                    <div class="cell pink-area" data-x="3" data-y="2"></div>
+                    
+                    <!-- Строка 3 -->
+                    <div class="cell hide"></div>
+                    <div class="cell hide"></div>
+                    <div class="cell pink-area" data-x="2" data-y="3"></div>
+                    <div class="cell pink-area" data-x="3" data-y="3"></div>
+                `;
+            }
+            
+            // Переустанавливаем drag-and-drop
+            setupDragAndDrop();
+        }
+
+        // Обновление отображения целевых сумм
+        function updateTargetDisplay() {
+            const targetSum = document.querySelector('.target-sum');
+            
+            if (currentLevel === 1) {
+                // Уровень 1: 2 области
+                targetSum.innerHTML = `
+                    <div class="target target-blue">
+                        <div class="target-label">Синяя область</div>
+                        <div class="target-value" id="targetBlue">0</div>
+                        <div class="target-current" id="currentBlue">0 из 0</div>
+                    </div>
+                    <div class="target target-orange">
+                        <div class="target-label">Оранжевая область</div>
+                        <div class="target-value" id="targetOrange">0</div>
+                        <div class="target-current" id="currentOrange">0 из 0</div>
+                    </div>
+                `;
+            } else {
+                // Уровень 2: 3 области
+                targetSum.innerHTML = `
+                    <div class="target target-blue">
+                        <div class="target-label">Синяя область</div>
+                        <div class="target-value" id="targetBlue">0</div>
+                        <div class="target-current" id="currentBlue">0 из 0</div>
+                    </div>
+                    <div class="target target-orange">
+                        <div class="target-label">Оранжевая область</div>
+                        <div class="target-value" id="targetOrange">0</div>
+                        <div class="target-current" id="currentOrange">0 из 0</div>
+                    </div>
+                    <div class="target target-pink">
+                        <div class="target-label">Розовая область</div>
+                        <div class="target-value" id="targetPink">0</div>
+                        <div class="target-current" id="currentPink">0 из 0</div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateOutlines() {
+            const gridContainer = document.getElementById('gridContainer');
+            const wrapper = document.getElementById('gridWrapper');
+            
+            // Удаляем старые рамки
+            document.querySelectorAll('.blue-outline, .orange-outline, .pink-outline').forEach(el => el.remove());
+            
+            const rect = wrapper.getBoundingClientRect();
+            const containerRect = gridContainer.getBoundingClientRect();
+            
+            const cellSize = 90 + 12; // размер ячейки + gap
+            
+            if (currentLevel === 1) {
+                // Уровень 1: 2 области
+                // Синяя область (верхний левый квадрат 2x2)
+                const blueOutline = document.createElement('div');
+                blueOutline.className = 'blue-outline';
+                blueOutline.style.width = (cellSize * 2 - 12) + 'px';
+                blueOutline.style.height = (cellSize * 2 - 12) + 'px';
+                blueOutline.style.left = (rect.left + 20 - containerRect.left) + 'px';
+                blueOutline.style.top = (rect.top + 20 - containerRect.top) + 'px';
+                gridContainer.appendChild(blueOutline);
+                
+                // Оранжевая область (нижний правый квадрат 2x2)
+                const orangeOutline = document.createElement('div');
+                orangeOutline.className = 'orange-outline';
+                orangeOutline.style.width = (cellSize * 2 - 12) + 'px';
+                orangeOutline.style.height = (cellSize * 2 - 12) + 'px';
+                orangeOutline.style.left = (rect.left + 20 + cellSize - containerRect.left) + 'px';
+                orangeOutline.style.top = (rect.top + 20 + cellSize - containerRect.top) + 'px';
+                gridContainer.appendChild(orangeOutline);
+            } else {
+                // Уровень 2: 3 области
+                // Синяя область (верхний левый квадрат 2x2)
+                const blueOutline = document.createElement('div');
+                blueOutline.className = 'blue-outline';
+                blueOutline.style.width = (cellSize * 2 - 12) + 'px';
+                blueOutline.style.height = (cellSize * 2 - 12) + 'px';
+                blueOutline.style.left = (rect.left + 20 - containerRect.left) + 'px';
+                blueOutline.style.top = (rect.top + 20 - containerRect.top) + 'px';
+                gridContainer.appendChild(blueOutline);
+                
+                // Оранжевая область (центральный квадрат 2x2)
+                const orangeOutline = document.createElement('div');
+                orangeOutline.className = 'orange-outline';
+                orangeOutline.style.width = (cellSize * 2 - 12) + 'px';
+                orangeOutline.style.height = (cellSize * 2 - 12) + 'px';
+                orangeOutline.style.left = (rect.left + 20 + cellSize - containerRect.left) + 'px';
+                orangeOutline.style.top = (rect.top + 20 + cellSize - containerRect.top) + 'px';
+                gridContainer.appendChild(orangeOutline);
+                
+                // Розовая область (нижний правый квадрат 2x2)
+                const pinkOutline = document.createElement('div');
+                pinkOutline.className = 'pink-outline';
+                pinkOutline.style.width = (cellSize * 2 - 12) + 'px';
+                pinkOutline.style.height = (cellSize * 2 - 12) + 'px';
+                pinkOutline.style.left = (rect.left + 20 + cellSize * 2 - containerRect.left) + 'px';
+                pinkOutline.style.top = (rect.top + 20 + cellSize * 2 - containerRect.top) + 'px';
+                gridContainer.appendChild(pinkOutline);
+            }
+        }
+
+        // Инициализация
+        window.onload = function() {
+            updateRangeDisplay();
+            updateNumbersCountDisplay();
+            generateNewPuzzle();
+            setupDragAndDrop();
+        };
+
+        window.addEventListener('resize', updateOutlines);
+
+        // Генерация новой задачи
+        function generateNewPuzzle() {
+            updateRangeDisplay();
+            updateNumbersCountDisplay();
+            
+            const range = maxNum - minNum + 1;
+            
+            // Генерируем указанное количество чисел для решения
+            solutionNumbers = [];
+            for (let i = 0; i < numbersCount; i++) {
+                solutionNumbers.push(Math.floor(Math.random() * range) + minNum);
+            }
+            
+            console.log("Сгенерированные числа:", solutionNumbers);
+            console.log("Количество чисел:", numbersCount);
+            
+            let availableCells;
+            let placement = {};
+            
+            if (currentLevel === 1) {
+                // Уровень 1: 2 квадрата 2x2, пересекающиеся одним углом
+                availableCells = [
+                    {x: 0, y: 0, area: 'blue'},
+                    {x: 1, y: 0, area: 'blue'},
+                    {x: 0, y: 1, area: 'blue'},
+                    {x: 1, y: 1, area: 'both'},
+                    {x: 2, y: 1, area: 'orange'},
+                    {x: 1, y: 2, area: 'orange'},
+                    {x: 2, y: 2, area: 'orange'}
+                ];
+                
+                console.log("Доступные ячейки для уровня 1:", availableCells.length);
+                
+                // Перемешиваем ячейки случайным образом
+                const shuffledCells = [...availableCells].sort(() => Math.random() - 0.5);
+                
+                // Размещаем числа в случайных ячейках
+                for (let i = 0; i < numbersCount; i++) {
+                    const cell = shuffledCells[i];
+                    placement[cell.x + ',' + cell.y] = solutionNumbers[i];
+                    console.log(`Размещено число ${solutionNumbers[i]} в ячейке (${cell.x},${cell.y})`);
+                }
+                
+                // Вычисляем целевые суммы из случайного размещения
+                const s00 = placement['0,0'] || 0;
+                const s10 = placement['1,0'] || 0;
+                const s01 = placement['0,1'] || 0;
+                const s11 = placement['1,1'] || 0;
+                const s21 = placement['2,1'] || 0;
+                const s12 = placement['1,2'] || 0;
+                const s22 = placement['2,2'] || 0;
+
+                targetBlue = s00 + s10 + s01 + s11;
+                targetOrange = s11 + s21 + s12 + s22;
+                targetPink = 0;
+                
+                console.log("Размещение чисел:", placement);
+                console.log("Целевые суммы: синяя=" + targetBlue + ", оранжевая=" + targetOrange);
+                
+            } else {
+                // Уровень 2: 3 квадрата 2x2, расположенные по диагонали
+                // Убираем дубликаты, используя Set для уникальных координат
+                const uniqueCells = new Set();
+                availableCells = [
+                    // Первый квадрат (синий)
+                    {x: 0, y: 0, area: 'blue'},
+                    {x: 1, y: 0, area: 'blue'},
+                    {x: 0, y: 1, area: 'blue'},
+                    {x: 1, y: 1, area: 'blue-orange'}, // общая с оранжевым
+                    
+                    // Второй квадрат (оранжевый)
+                    {x: 2, y: 1, area: 'orange'},
+                    {x: 1, y: 2, area: 'orange'},
+                    {x: 2, y: 2, area: 'orange-pink'}, // общая с розовым
+                    
+                    // Третий квадрат (розовый)
+                    {x: 3, y: 2, area: 'pink'},
+                    {x: 2, y: 3, area: 'pink'},
+                    {x: 3, y: 3, area: 'pink'}
+                ];
+                
+                // Фильтруем уникальные ячейки
+                availableCells = availableCells.filter(cell => {
+                    const key = cell.x + ',' + cell.y;
+                    if (uniqueCells.has(key)) {
+                        return false;
+                    }
+                    uniqueCells.add(key);
+                    return true;
+                });
+                
+                console.log("Доступные ячейки для уровня 2:", availableCells.length);
+                
+                // Перемешиваем ячейки случайным образом
+                const shuffledCells = [...availableCells].sort(() => Math.random() - 0.5);
+                
+                // Размещаем числа в случайных ячейках
+                for (let i = 0; i < numbersCount; i++) {
+                    const cell = shuffledCells[i];
+                    placement[cell.x + ',' + cell.y] = solutionNumbers[i];
+                    console.log(`Размещено число ${solutionNumbers[i]} в ячейке (${cell.x},${cell.y})`);
+                }
+                
+                // Вычисляем целевые суммы из случайного размещения
+                const s00 = placement['0,0'] || 0;
+                const s10 = placement['1,0'] || 0;
+                const s01 = placement['0,1'] || 0;
+                const s11 = placement['1,1'] || 0;
+                const s21 = placement['2,1'] || 0;
+                const s12 = placement['1,2'] || 0;
+                const s22 = placement['2,2'] || 0;
+                const s32 = placement['3,2'] || 0;
+                const s23 = placement['2,3'] || 0;
+                const s33 = placement['3,3'] || 0;
+
+                targetBlue = s00 + s10 + s01 + s11;
+                targetOrange = s11 + s21 + s12 + s22;
+                targetPink = s22 + s32 + s23 + s33;
+                
+                console.log("Размещение чисел:", placement);
+                console.log("Целевые суммы: синяя=" + targetBlue + ", оранжевая=" + targetOrange + ", розовая=" + targetPink);
+            }
+            
+            // Сохраняем размещение для функции показа ответа
+            solutionPlacement = placement;
+            
+            // Показываем пользователю все сгенерированные числа
+            currentNumbers = [...solutionNumbers];
+
+            // Обновляем отображение
+            document.getElementById('targetBlue').textContent = targetBlue;
+            document.getElementById('targetOrange').textContent = targetOrange;
+            if (currentLevel === 2) {
+                document.getElementById('targetPink').textContent = targetPink;
+                document.getElementById('currentPink').textContent = '0 из ' + targetPink;
+            }
+            document.getElementById('currentBlue').textContent = '0 из ' + targetBlue;
+            document.getElementById('currentOrange').textContent = '0 из ' + targetOrange;
+            document.getElementById('message').textContent = '';
+            document.getElementById('message').className = 'message';
+            
+            // Обновляем банк чисел
+            updateNumbersBank();
+            
+            // Очищаем сетку
+            clearGrid();
+            
+            setTimeout(updateOutlines, 100);
+        }
+
+        // Показать ответ
+        function showAnswer() {
+            // Очищаем сетку
+            clearGrid();
+            
+            console.log("Показываем ответ:");
+            console.log("Сгенерированные числа:", solutionNumbers);
+            console.log("Размещение:", solutionPlacement);
+            console.log("Количество размещенных чисел:", Object.keys(solutionPlacement).length);
+            
+            // Расставляем числа на правильные места согласно случайному размещению
+            for (const [cellKey, number] of Object.entries(solutionPlacement)) {
+                const [x, y] = cellKey.split(',').map(Number);
+                const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+                if (cell) {
+                    const chip = document.createElement('div');
+                    chip.className = 'number-chip in-cell';
+                    chip.textContent = number;
+                    chip.draggable = true;
+                    chip.addEventListener('dragstart', handleDragStart);
+                    chip.addEventListener('dragend', handleDragEnd);
+                    cell.appendChild(chip);
+                    console.log(`Размещено число ${number} в ячейке (${x},${y})`);
+                }
+            }
+            
+            // Проверяем, что все числа размещены
+            const placedNumbers = Object.values(solutionPlacement);
+            if (placedNumbers.length !== numbersCount) {
+                console.error(`ОШИБКА: Размещено ${placedNumbers.length} чисел из ${numbersCount}!`);
+                console.error("Сгенерированные числа:", solutionNumbers);
+                console.error("Размещенные числа:", placedNumbers);
+            }
+            
+            // Очищаем банк чисел
+            currentNumbers = [];
+            updateNumbersBank();
+            
+            // Обновляем текущие суммы
+            updateCurrentSums();
+            
+            // Показываем сообщение
+            showMessage('✓ Ответ показан!', 'success');
+        }
+
+        // Обновление банка чисел
+        function updateNumbersBank() {
+            const bank = document.getElementById('numbersBank');
+            bank.innerHTML = '';
+            bank.classList.remove('empty');
+            
+            if (currentNumbers.length === 0) {
+                bank.classList.add('empty');
+                bank.textContent = 'Все числа размещены';
+                return;
+            }
+            
+            // Создаем копию для отображения (только видимые числа)
+            currentNumbers.forEach((num, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'number-chip';
+                chip.textContent = num;
+                chip.draggable = true;
+                chip.dataset.number = num;
+                chip.dataset.bankIndex = index;
+                chip.id = 'bank-' + index;
+                
+                chip.addEventListener('dragstart', handleDragStart);
+                chip.addEventListener('dragend', handleDragEnd);
+                
+                bank.appendChild(chip);
+            });
+        }
+
+        // Настройка drag-and-drop
+        function setupDragAndDrop() {
+            const cells = document.querySelectorAll('.cell:not(.hide)');
+            cells.forEach(cell => {
+                cell.addEventListener('dragover', handleDragOver);
+                cell.addEventListener('drop', handleDrop);
+            });
+            
+            // Добавляем поддержку для банка
+            const bankContainer = document.getElementById('numbersBank');
+            bankContainer.addEventListener('dragover', handleDragOver);
+            bankContainer.addEventListener('drop', handleDropToBank);
+        }
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            sourceCell = e.target.parentElement;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            e.preventDefault();
+            
+            const cell = e.target.closest('.cell');
+            if (!cell || !draggedElement) return;
+
+            // Если ячейка уже занята
+            if (cell.querySelector('.number-chip')) {
+                return false;
+            }
+
+            // Перемещаем элемент
+            draggedElement.classList.remove('dragging');
+            draggedElement.classList.add('in-cell');
+            
+            // Удаляем из банка
+            if (sourceCell && sourceCell.id === 'numbersBank') {
+                const numIndex = parseInt(draggedElement.dataset.bankIndex);
+                currentNumbers.splice(numIndex, 1);
+            } else if (sourceCell && sourceCell.classList.contains('cell')) {
+                // Возвращаем число в банк, если перетащили из ячейки
+                const value = parseInt(draggedElement.textContent);
+                sourceCell.innerHTML = '';
+            }
+
+            // Добавляем в новую ячейку
+            const newChip = draggedElement.cloneNode(true);
+            newChip.draggable = true;
+            newChip.addEventListener('dragstart', handleDragStart);
+            newChip.addEventListener('dragend', handleDragEnd);
+            cell.appendChild(newChip);
+
+            // Если перетащили из банка, удаляем оригинал
+            if (sourceCell && sourceCell.id === 'numbersBank') {
+                draggedElement.remove();
+            }
+
+            draggedElement = null;
+            sourceCell = null;
+            
+            // Обновляем банк и текущие суммы
+            updateNumbersBank();
+            updateCurrentSums();
+            
+            return false;
+        }
+
+        function handleDropToBank(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            e.preventDefault();
+            
+            // Проверяем, что элемент был из ячейки
+            if (!draggedElement || !sourceCell || !sourceCell.classList.contains('cell')) {
+                return false;
+            }
+
+            const value = parseInt(draggedElement.textContent);
+            
+            // Удаляем из ячейки
+            sourceCell.innerHTML = '';
+            
+            // Возвращаем число обратно в конец массива
+            currentNumbers.push(value);
+
+            // Обновляем банк и текущие суммы
+            updateNumbersBank();
+            updateCurrentSums();
+            
+            draggedElement = null;
+            sourceCell = null;
+            
+            return false;
+        }
+
+        function updateCurrentSums() {
+            const cells = document.querySelectorAll('.cell:not(.hide)');
+            const values = {};
+            
+            cells.forEach(cell => {
+                const chip = cell.querySelector('.number-chip');
+                if (chip) {
+                    const x = parseInt(cell.getAttribute('data-x'));
+                    const y = parseInt(cell.getAttribute('data-y'));
+                    const value = parseInt(chip.textContent);
+                    values[x + ',' + y] = value;
+                }
+            });
+
+            if (currentLevel === 1) {
+                // Уровень 1: 2 области
+                const blueSum = (values['0,0'] || 0) + (values['1,0'] || 0) + 
+                              (values['0,1'] || 0) + (values['1,1'] || 0);
+                const orangeSum = (values['1,1'] || 0) + (values['2,1'] || 0) + 
+                                (values['1,2'] || 0) + (values['2,2'] || 0);
+
+                document.getElementById('currentBlue').textContent = blueSum + ' из ' + targetBlue;
+                document.getElementById('currentOrange').textContent = orangeSum + ' из ' + targetOrange;
+            } else {
+                // Уровень 2: 3 области
+                const blueSum = (values['0,0'] || 0) + (values['1,0'] || 0) + 
+                              (values['0,1'] || 0) + (values['1,1'] || 0);
+                const orangeSum = (values['1,1'] || 0) + (values['2,1'] || 0) + 
+                                (values['1,2'] || 0) + (values['2,2'] || 0);
+                const pinkSum = (values['2,2'] || 0) + (values['3,2'] || 0) + 
+                              (values['2,3'] || 0) + (values['3,3'] || 0);
+
+                document.getElementById('currentBlue').textContent = blueSum + ' из ' + targetBlue;
+                document.getElementById('currentOrange').textContent = orangeSum + ' из ' + targetOrange;
+                document.getElementById('currentPink').textContent = pinkSum + ' из ' + targetPink;
+            }
+        }
+
+        // Проверка решения
+        function checkSolution() {
+            const cells = document.querySelectorAll('.cell:not(.hide)');
+            const values = {};
+            
+            cells.forEach(cell => {
+                const chip = cell.querySelector('.number-chip');
+                if (chip) {
+                    const x = parseInt(cell.getAttribute('data-x'));
+                    const y = parseInt(cell.getAttribute('data-y'));
+                    const value = parseInt(chip.textContent);
+                    values[x + ',' + y] = value;
+                }
+            });
+
+            // Проверяем, что размещено ровно столько чисел, сколько было сгенерировано
+            const placedNumbers = Object.values(values).length;
+            if (placedNumbers !== numbersCount) {
+                showMessage(`Размещено ${placedNumbers} чисел из ${numbersCount}. Используйте все числа!`, 'error');
+                return;
+            }
+
+            if (currentLevel === 1) {
+                // Уровень 1: 2 области
+                // Вычисляем суммы только для заполненных ячеек
+                const blueSum = (values['0,0'] || 0) + (values['1,0'] || 0) + 
+                              (values['0,1'] || 0) + (values['1,1'] || 0);
+                const orangeSum = (values['1,1'] || 0) + (values['2,1'] || 0) + 
+                                (values['1,2'] || 0) + (values['2,2'] || 0);
+
+                const blueCorrect = blueSum === targetBlue;
+                const orangeCorrect = orangeSum === targetOrange;
+
+                if (blueCorrect && orangeCorrect) {
+                    showMessage('✓ Отлично! Задача решена правильно!', 'success');
+                } else {
+                    let errors = [];
+                    if (!blueCorrect) {
+                        errors.push(`Синяя: ${blueSum} вместо ${targetBlue}`);
+                    }
+                    if (!orangeCorrect) {
+                        errors.push(`Оранжевая: ${orangeSum} вместо ${targetOrange}`);
+                    }
+                    showMessage('✗ Проверьте суммы: ' + errors.join(', '), 'error');
+                }
+            } else {
+                // Уровень 2: 3 области
+                // Вычисляем суммы только для заполненных ячеек
+                const blueSum = (values['0,0'] || 0) + (values['1,0'] || 0) + 
+                              (values['0,1'] || 0) + (values['1,1'] || 0);
+                const orangeSum = (values['1,1'] || 0) + (values['2,1'] || 0) + 
+                                (values['1,2'] || 0) + (values['2,2'] || 0);
+                const pinkSum = (values['2,2'] || 0) + (values['3,2'] || 0) + 
+                              (values['2,3'] || 0) + (values['3,3'] || 0);
+
+                const blueCorrect = blueSum === targetBlue;
+                const orangeCorrect = orangeSum === targetOrange;
+                const pinkCorrect = pinkSum === targetPink;
+
+                if (blueCorrect && orangeCorrect && pinkCorrect) {
+                    showMessage('✓ Отлично! Задача решена правильно!', 'success');
+                } else {
+                    let errors = [];
+                    if (!blueCorrect) {
+                        errors.push(`Синяя: ${blueSum} вместо ${targetBlue}`);
+                    }
+                    if (!orangeCorrect) {
+                        errors.push(`Оранжевая: ${orangeSum} вместо ${targetOrange}`);
+                    }
+                    if (!pinkCorrect) {
+                        errors.push(`Розовая: ${pinkSum} вместо ${targetPink}`);
+                    }
+                    showMessage('✗ Проверьте суммы: ' + errors.join(', '), 'error');
+                }
+            }
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+        }
+
+        // Очистка
+        function resetPuzzle() {
+            const cells = document.querySelectorAll('.cell:not(.hide)');
+            cells.forEach(cell => {
+                const chip = cell.querySelector('.number-chip');
+                if (chip) {
+                    const value = parseInt(chip.textContent);
+                    currentNumbers.push(value);
+                    cell.innerHTML = '';
+                }
+            });
+            
+            document.getElementById('message').textContent = '';
+            document.getElementById('message').className = 'message';
+            document.getElementById('currentBlue').textContent = '0 из ' + targetBlue;
+            document.getElementById('currentOrange').textContent = '0 из ' + targetOrange;
+            
+            updateNumbersBank();
+        }
+
+        function clearGrid() {
+            const cells = document.querySelectorAll('.cell:not(.hide)');
+            cells.forEach(cell => {
+                cell.innerHTML = '';
+            });
+        }
+    </script>
+</body>
+</html>

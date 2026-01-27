@@ -11,7 +11,39 @@
       background: #0f1220;
       color: #e9ecf1;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
+		background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)),
+                url('img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+    } 
+	  body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)),
+                url('img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+		  background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+	  
     .topbar {
       position: fixed;
       top: 0;

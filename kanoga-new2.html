@@ -19,7 +19,7 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f9f9f9;
+            background-color: #f9f9f9;			
             margin: 0;
             padding: 20px;
             display: flex;
@@ -28,7 +28,26 @@
             min-height: 100vh;
             color: #333;
         }
-        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.1)),
+                url('Img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+		body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+    z-index: -1;
+}
+
         .game-wrapper {
             width: 100%;
             max-width: 700px;
@@ -354,12 +373,33 @@
         .dice-rolling {
             animation: diceRoll 0.4s 2;
         }
+		.back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
     </style>
 </head>
 <body>
     <div class="game-wrapper">
         <div class="settings-panel" id="settingsPanel">
-            <h2 class="settings-title">Настройки игры Канога</h2>
+            <h2 class="settings-title">Настройки игры Канога<a href="index.html" class="back-button">←</a></h2>
             <div class="settings-form">
                 <div class="form-group">
                     <label for="player1">Игрок 1 (сверху):</label>
