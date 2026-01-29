@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рыбаки</title>
+  <style>
+    html, body { margin:0; height:100%; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#182230; }
+    .topbar { position:fixed; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; background:#ffffffcc; backdrop-filter: blur(6px); border-bottom:1px solid #d8dde7; z-index:10; }
+    .title { font-weight:700; }
+    .btn { background:#2b68e5; color:#fff; border:0; padding:8px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
+    .btn:hover { opacity:.9; }
+
+    .legend { position:fixed; top:54px; left:0; right:0; height:60px; display:flex; align-items:center; justify-content:center; gap:14px; padding:8px; background:#ffffffeb; border-bottom:1px solid #d8dde7; z-index:9; overflow-x:auto; }
+    .legend-item { display:flex; align-items:center; gap:8px; background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:6px 10px; flex-shrink:0; }
+    .legend-item img { width:28px; height:28px; object-fit:contain; }
+    .legend-item .val { font-weight:700; }
+
+    .canvas-wrap { position:absolute; top:114px; left:0; right:0; bottom:140px; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; }
+    .stage { position:relative; background:#f7f7fa; border:1px solid #cfd6e6; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); overflow:hidden; }
+    canvas { width:100%; height:100%; display:block; }
+
+    .counting-panel { position:fixed; bottom:0; left:0; right:0; height:140px; display:grid; align-items:center; justify-items:center; gap:8px; padding:12px 16px; background:#ffffff; border-top:1px solid #d8dde7; }
+    .counting-panel { grid-template-rows: auto auto; }
+    .counting-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+    .count-fields { display:flex; align-items:center; gap:12px; }
+    .count-field { display:flex; align-items:center; gap:8px; background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:8px 12px; min-width:160px; flex-shrink:0; }
+    .count-field.correct { border-color:#16a34a; background:#dcfce7; }
+    .count-field.incorrect { border-color:#ef4444; background:#fee2e2; }
+    .count-field input { width:70px; background:transparent; border:none; color:#182230; font-size:16px; text-align:center; outline:none; }
+    .total-field { background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:8px 12px; min-width:140px; text-align:center; font-weight:700; }
+    .total-field.correct { border-color:#16a34a; background:#dcfce7; }
+    .total-field.incorrect { border-color:#ef4444; background:#fee2e2; }
+    .check-btn { background:#2b68e5; color:#fff; border:0; padding:12px 18px; border-radius:10px; cursor:pointer; font-weight:700; }
+
+    .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:20; background:rgba(0,0,0,0.35); padding:16px; }
+    .panel { width:min(900px,96vw); max-height:92vh; overflow:auto; background:#ffffff; color:#182230; border:1px solid #d8dde7; border-radius:14px; padding:16px; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    .field { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:10px; }
+    .num { width:42px; padding:8px 10px; border-radius:8px; border:1px solid #c0c9e2; }
+    .fish { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; }
+    .tile { background:#f6f8fe; border:1px solid #dbe3f7; border-radius:12px; padding:10px; display:grid; gap:6px; user-select:none; }
+    .tile img { width:48px; height:48px; object-fit:contain; justify-self:center; }
+    .backgrounds { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; }
+    .bg-tile { background:#f6f8fe; border:1px solid #dbe3f7; border-radius:12px; padding:10px; display:grid; gap:6px; user-select:none; cursor:pointer; }
+    .bg-tile.selected { border-color:#2b68e5; background:#e6f2ff; }
+    .bg-tile img { width:80px; height:60px; object-fit:cover; justify-self:center; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">Рыбаки</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="btn-new" class="btn">Новая игра</button>
+      <button id="btn-settings" class="btn" style="background:#50658f;">Настройки</button>
+    </div>
+  </div>
+
+  <div id="legend" class="legend"></div>
+
+  <div class="canvas-wrap">
+    <div id="stage" class="stage">
+      <canvas id="view"></canvas>
+    </div>
+  </div>
+
+  <div class="counting-panel">
+    <div class="counting-row">
+      <div id="countFields" class="count-fields"></div>
+          </div>
+    <div class="counting-row">
+		<div class="total-field" id="totalFieldSea">Всего в море на сумму: <input id="inpSea" type="number" min="0" max="9999" placeholder="?" style="width:70px; background:transparent; border:none; text-align:center;"></div>
+      <div class="total-field" id="totalFieldBoy">Мальчик словил на сумму: <input id="inpBoy" type="number" min="0" max="9999" placeholder="?" style="width:70px; background:transparent; border:none; text-align:center;"></div>
+      <div class="total-field" id="totalFieldGirl">Девочка словила на сумму: <input id="inpGirl" type="number" min="0" max="9999" placeholder="?" style="width:70px; background:transparent; border:none; text-align:center;"></div>
+          </div>
+    <div class="counting-row">
+		<div class="total-field" id="totalFieldAll">Всего словили на сумму: <input id="inpTotalAll" type="number" min="0" max="9999" placeholder="?" style="width:70px; background:transparent; border:none; text-align:center;"></div>
+      <div class="total-field" id="totalFieldRemain">Осталось в море на сумму: <input id="inpRemain" type="number" min="0" max="9999" placeholder="?" style="width:70px; background:transparent; border:none; text-align:center;"></div>
+      <button id="btn-check" class="check-btn">Проверить</button>
+      <button id="btn-show-answers" class="check-btn" style="background:#16a34a;">Показать ответы</button>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="panel">
+      <h3 style="margin:0 0 10px 0;">Настройки</h3>
+      <div class="grid">
+        <div class="field">
+          <label>Сколько типов рыб участвует</label>
+          <input id="participatingCount" class="num" type="number" min="1" max="11" value="4">
+        </div>
+        <div class="field">
+          <label>Радиус элемента (px)</label>
+          <input id="itemRadius" class="num" type="number" min="10" max="40" value="22">
+        </div>
+        <div class="field">
+          <label>Доп. зазор (px)</label>
+          <input id="extraGap" class="num" type="number" min="0" max="40" value="4">
+        </div>
+        <div class="field">
+          <label>Мин. улов рыбака</label>
+          <input id="minCatches" class="num" type="number" min="0" max="50" value="3">
+        </div>
+        <div class="field">
+          <label>Макс. улов рыбака</label>
+          <input id="maxCatches" class="num" type="number" min="0" max="50" value="7">
+        </div>
+        <div class="field">
+          <label>Масштаб (%)</label>
+          <input id="scalePercent" class="num" type="number" min="50" max="300" value="100">
+        </div>
+      </div>
+      <h4 style="margin:12px 0 8px 0;">Выберите фон:</h4>
+      <div id="backgroundTiles" class="backgrounds"></div>
+      <h4 style="margin:12px 0 8px 0;">Выберите типы рыб и задайте мин/макс и стоимость в $:</h4>
+      <div id="fishTiles" class="fish"></div>
+      <div class="panel-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+        <button id="btn-cancel" class="btn" style="background:#8e98ad;">Отмена</button>
+        <button id="btn-apply" class="btn">Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('view');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const stage = document.getElementById('stage');
+    const wrap = document.querySelector('.canvas-wrap');
+    const legendEl = document.getElementById('legend');
+    
+    // Ширина зон под рыбаков и их миниатюры
+    const FISHER_BASE_R = Math.round(28 * 1.5 * 1.5); // фикс радиус рыбака (px) увеличен в 1.5 раза
+    const MINI_SIZE = 34; const MINI_GAP = 8; // размер добычи уменьшен на 20% (42 * 0.8 = 33.6 ≈ 34)
+    const GRID_W = 8*MINI_SIZE + 7*MINI_GAP; // ширина миниатюр в ряд
+    const EXCLUDE_W = FISHER_BASE_R*2 + 12 + GRID_W; // ширина зоны под рыбака + миниатюры
+    const EXCLUDE_H = 160; // высота верхней зоны с рыбаками и миниатюрами
+
+    // Кэш изображений
+    const IMG_CACHE = new Map();
+    function getCachedImage(src, onReady){
+      let entry = IMG_CACHE.get(src);
+      if (entry && entry.img && entry.loaded){
+        if (onReady) onReady(entry.img);
+        return entry.img;
+      }
+      if (!entry){
+        const img = new Image();
+        entry = { img, loaded:false, cbs: [] };
+        IMG_CACHE.set(src, entry);
+        img.onload = () => { entry.loaded = true; entry.cbs.forEach(cb=>cb(img)); entry.cbs = []; };
+        img.onerror = () => { entry.loaded = false; entry.cbs = []; };
+        img.src = src;
+      }
+      if (onReady) entry.cbs.push(onReady);
+      return entry.img;
+    }
+
+    const overlay = document.getElementById('overlay');
+    const fishTiles = document.getElementById('fishTiles');
+    const backgroundTiles = document.getElementById('backgroundTiles');
+    const ui = {
+      participatingCount: document.getElementById('participatingCount'),
+      itemRadius: document.getElementById('itemRadius'),
+      extraGap: document.getElementById('extraGap'),
+      minCatches: document.getElementById('minCatches'),
+      maxCatches: document.getElementById('maxCatches'),
+      scalePercent: document.getElementById('scalePercent'),
+    };
+    const btnNew = document.getElementById('btn-new');
+    const btnSettings = document.getElementById('btn-settings');
+    const btnApply = document.getElementById('btn-apply');
+    const btnCancel = document.getElementById('btn-cancel');
+    const btnCheck = document.getElementById('btn-check');
+    const btnShowAnswers = document.getElementById('btn-show-answers');
+    const countFields = document.getElementById('countFields');
+    const totalAll = document.getElementById('totalFieldAll');
+    const totalBoy = document.getElementById('totalFieldBoy');
+    const totalGirl = document.getElementById('totalFieldGirl');
+    const totalSea = document.getElementById('totalFieldSea');
+    const totalRemain = document.getElementById('totalFieldRemain');
+    const inpTotalAll = document.getElementById('inpTotalAll');
+    const inpBoy = document.getElementById('inpBoy');
+    const inpGirl = document.getElementById('inpGirl');
+    const inpSea = document.getElementById('inpSea');
+    const inpRemain = document.getElementById('inpRemain');
+
+    function openSettings(){ overlay.style.display = 'flex'; }
+    function closeSettings(){ overlay.style.display = 'none'; }
+
+    function resizeCanvas(){
+      const cont = wrap.getBoundingClientRect();
+      const maxW = Math.max(200, cont.width - 24);
+      const maxH = Math.max(200, cont.height - 24);
+      const ratio = 16/9; let w = maxW; let h = w/ratio; if (h>maxH){ h=maxH; w=h*ratio; }
+      stage.style.width = Math.floor(w) + 'px'; stage.style.height = Math.floor(h) + 'px';
+      const rect = stage.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr); canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px'; canvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      drawScene(lastState);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Данные
+    const FISH_TYPES = [
+      { id:'fish1', name:'Ёршик', src:'Рыбы/ёршик.png' },
+      { id:'fish2', name:'Конёк', src:'Рыбы/конек.png' },
+      { id:'fish3', name:'Медуза', src:'Рыбы/медуза.png' },
+      { id:'fish4', name:'Налим', src:'Рыбы/налим.png' },
+      { id:'fish5', name:'Пуся', src:'Рыбы/пуся.png' },
+      { id:'fish6', name:'Ракушка', src:'Рыбы/ракушка.png' },
+      { id:'fish7', name:'Рачок', src:'Рыбы/рачок.png' },
+      { id:'fish8', name:'Рыба-клоун', src:'Рыбы/рыба-клоун.png' },
+      { id:'fish9', name:'Селедка', src:'Рыбы/селедка.png' },
+      { id:'fish10', name:'Черепаха', src:'Рыбы/черепаха.png' },
+      { id:'fish11', name:'Чукапупи', src:'Рыбы/чукапупи.png' },
+    ];
+    
+    const FISHERS = [
+      { id:'boy', name:'Мальчик', src:'мальчик.png' },
+      { id:'girl', name:'Девочка', src:'девочка.png' },
+    ];
+
+    const BACKGROUNDS = [
+      { id:'bg1', name:'Фон 1', src:'Фоны/фон 1.png' },
+      { id:'bg2', name:'Фон 2', src:'Фоны/фон 2.png' },
+      { id:'bg3', name:'Фон 3', src:'Фоны/фон 3.jpg' },
+      { id:'bg4', name:'Фон 4', src:'Фоны/фон 4.png' },
+    ];
+
+    // Настройка по типам: выбран/ мин/макс/ стоимость
+    const perFish = new Map(FISH_TYPES.map(f => [f.id, { selected:true, min:3, max:6, value:1 }]));
+    let selectedBackground = 'bg1';
+
+    function renderBackgroundTiles(){
+      backgroundTiles.innerHTML = '';
+      BACKGROUNDS.forEach(bg => {
+        const tile = document.createElement('div'); 
+        tile.className = `bg-tile ${selectedBackground === bg.id ? 'selected' : ''}`;
+        tile.dataset.bgId = bg.id;
+        const img = document.createElement('img'); 
+        img.src = bg.src; 
+        img.alt = bg.name; 
+        tile.appendChild(img);
+        const name = document.createElement('div'); 
+        name.style.textAlign='center'; 
+        name.textContent = bg.name; 
+        tile.appendChild(name);
+        tile.addEventListener('click', () => {
+          document.querySelectorAll('.bg-tile').forEach(t => t.classList.remove('selected'));
+          tile.classList.add('selected');
+          selectedBackground = bg.id;
+        });
+        backgroundTiles.appendChild(tile);
+      });
+    }
+
+    function renderFishTiles(){
+      fishTiles.innerHTML = '';
+      FISH_TYPES.forEach(f => {
+        const tile = document.createElement('div'); tile.className='tile';
+        const img = document.createElement('img'); img.src = f.src; img.alt = f.name; tile.appendChild(img);
+        const name = document.createElement('div'); name.style.textAlign='center'; name.textContent = f.name; tile.appendChild(name);
+        const row1 = document.createElement('div'); row1.style.display='grid'; row1.style.gridTemplateColumns='1fr 1fr'; row1.style.gap='6px';
+        const minInput = document.createElement('input'); minInput.type='number'; minInput.className='num'; minInput.min='0'; minInput.max='200';
+        const maxInput = document.createElement('input'); maxInput.type='number'; maxInput.className='num'; maxInput.min='0'; maxInput.max='200';
+        const valInput = document.createElement('input'); valInput.type='number'; valInput.className='num'; valInput.min='0'; valInput.max='200'; valInput.style.gridColumn='span 2';
+        const cur = perFish.get(f.id) || {selected:true, min:1, max:3, value:1};
+        minInput.value = String(cur.min); maxInput.value = String(cur.max); valInput.value = String(cur.value);
+        minInput.addEventListener('input', ()=>{ const c=perFish.get(f.id); c.min = Math.max(0, +minInput.value|0); if (c.max < c.min){ c.max = c.min; maxInput.value = String(c.max);} });
+        maxInput.addEventListener('input', ()=>{ const c=perFish.get(f.id); c.max = Math.max(0, +maxInput.value|0); if (c.max < c.min){ c.min = c.max; minInput.value = String(c.min);} });
+        valInput.addEventListener('input', ()=>{ const c=perFish.get(f.id); c.value = Math.max(0, +valInput.value|0); });
+        row1.appendChild(minInput); row1.appendChild(maxInput); row1.appendChild(valInput);
+        const sel = document.createElement('div'); sel.style.textAlign='center'; sel.style.marginTop='6px';
+        const chk = document.createElement('input'); chk.type='checkbox'; chk.checked = !!cur.selected; chk.addEventListener('change', ()=>{ const c=perFish.get(f.id); c.selected = chk.checked; });
+        sel.append('Участвует ', chk);
+        tile.appendChild(row1); tile.appendChild(sel);
+        fishTiles.appendChild(tile);
+      });
+    }
+
+    // Helpers
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    function distance(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+
+    function computeBounds(itemRadius){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      const left = itemRadius + 10; const right = w - itemRadius - 10;
+      // Исключаем верхние 20% холста
+      const top = Math.max(itemRadius + 10, h * 0.2 + itemRadius + 10);
+      const bottom = h - itemRadius - 10;
+      return {left,right,top,bottom};
+    }
+
+    function generatePositions(total, itemRadius, extraGap){
+      const minGap = 2*itemRadius + extraGap;
+      const bounds = computeBounds(itemRadius);
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      const pts = [];
+      let tries = 0, maxTries = total * 400;
+      let gap = minGap;
+      while (pts.length < total && tries < maxTries){
+        const x = randInt(bounds.left, bounds.right);
+        const y = randInt(bounds.top, bounds.bottom);
+        // запретные зоны: слева сверху и справа сверху (зоны рыбаков и их добычи)
+        const inLeftEx = (x < EXCLUDE_W) && (y < h * 0.2 + EXCLUDE_H);
+        const inRightEx = (x > w - EXCLUDE_W) && (y < h * 0.2 + EXCLUDE_H);
+        if (inLeftEx || inRightEx) { tries++; continue; }
+        let ok = true;
+        for (let i=0;i<pts.length;i++) { if (distance(pts[i].x, pts[i].y, x, y) < gap) { ok=false; break; } }
+        if (ok) pts.push({x,y});
+        tries++;
+        if (tries % 1000 === 0 && gap > minGap*0.7) gap *= 0.95;
+      }
+      return pts;
+    }
+
+    // Состояние раунда
+    let lastState = null;
+
+    function buildAndDraw(){
+      // Собираем активные рыбы
+      const selected = FISH_TYPES.filter(f => (perFish.get(f.id)||{}).selected);
+      const k = Math.min(selected.length, Math.max(1, (+ui.participatingCount.value|0)));
+      const activeFish = selected.slice().sort(()=>Math.random()-0.5).slice(0,k);
+      
+      // Генерация количества по типам
+      const countsByType = new Map();
+      let totalFish = 0;
+      activeFish.forEach(f => {
+        const conf = perFish.get(f.id);
+        const n = randInt(conf.min, Math.max(conf.min, conf.max));
+        countsByType.set(f.id, n); totalFish += n;
+      });
+
+      // Позиции рыб
+      const scale = Math.max(0.5, (+ui.scalePercent.value||100)/100);
+      const itemR = Math.max(4, Math.round((+ui.itemRadius.value|0) * scale));
+      const extra = +ui.extraGap.value|0;
+      const pts = generatePositions(totalFish, itemR*2, extra);
+      const items = [];
+      let idx = 0;
+      activeFish.forEach(f => {
+        const n = countsByType.get(f.id) || 0;
+        for (let i=0;i<n && idx<pts.length;i++,idx++){
+          items.push({ x: pts[idx].x, y: pts[idx].y, fishId: f.id, flipped: Math.random() < 0.5 });
+        }
+      });
+
+      // Легенда (стоимость за тип)
+      const legend = activeFish.map(f => ({ id:f.id, name:f.name, src:f.src, value:(perFish.get(f.id)||{}).value|0 }));
+
+      // Раздаём улов рыбакам без пересечений
+      const catchMin = +ui.minCatches.value|0; const catchMax = +ui.maxCatches.value|0;
+      const pool = items.map((it, i)=>i); // индексы рыб
+      const shuffle = arr=>{ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
+      shuffle(pool);
+      const fisherCatches = [];
+      for (let b=0;b<FISHERS.length;b++){
+        const need = Math.min(pool.length, randInt(catchMin, Math.max(catchMin, catchMax)));
+        const picks = pool.splice(0, need);
+        fisherCatches.push(picks);
+      }
+
+      lastState = { activeFish, countsByType, items, legend, fisherCatches, itemR };
+      drawScene(lastState);
+      renderLegend();
+      renderAnswerPanel();
+    }
+
+    function drawScene(state){
+      if (!state) return;
+      const cont = wrap.getBoundingClientRect();
+      const maxW = Math.max(200, cont.width - 24);
+      const maxH = Math.max(200, cont.height - 24);
+      const ratio = 16/9; let w = maxW; let h = w/ratio; if (h>maxH){ h=maxH; w=h*ratio; }
+      const rect = { width:w, height:h };
+      
+      ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
+
+      // Фон
+      const selectedBg = BACKGROUNDS.find(bg => bg.id === selectedBackground);
+      if (selectedBg) {
+        getCachedImage(selectedBg.src, (img) => {
+          ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        });
+      }
+
+      // Рыбы
+      state.items.forEach(it => {
+        const f = FISH_TYPES.find(x=>x.id===it.fishId);
+        const r = state.itemR;
+        const cx = it.x, cy = it.y;
+        // Рыбы на поле без фона
+        getCachedImage(f.src, (img)=>{ 
+          ctx.save();
+          // Случайное отражение по горизонтали
+          if (it.flipped) {
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, -(cx + r), cy - r, 2*r, 2*r);
+          } else {
+            ctx.drawImage(img, cx - r, cy - r, 2*r, 2*r);
+          }
+          ctx.restore();
+        });
+      });
+
+      // Рыбаки: мальчик слева, девочка справа
+      const fisherAreaY = 16;
+      FISHERS.forEach((fisher, i) => {
+        const fy = fisherAreaY;
+        let fx;
+        if (i === 0) {
+          // мальчик слева
+          fx = 16;
+        } else {
+          // девочка справа
+          fx = canvas.clientWidth - (FISHER_BASE_R*2 + 16);
+        }
+        const r = Math.round(28 * 1.5 * 1.5); // фикс 150% увеличен в 1.5 раза
+        ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.arc(fx+r, fy+r, r, 0, Math.PI*2); ctx.fill(); ctx.restore();
+        getCachedImage(fisher.src, (img)=>{ ctx.drawImage(img, fx, fy, r*2, r*2); });
+        
+        // Миниатюры пойманных рыб
+        const catches = (lastState?.fisherCatches?.[i]||[]).map(idx => lastState.items[idx]);
+        const mini = MINI_SIZE; const gap = MINI_GAP; const rowsY = fy + 6;
+        if (i === 0) {
+          // мальчик: миниатюры справа от него
+          const startX = fx + r*2 + 12; const startY = rowsY;
+          catches.forEach((c, j) => {
+            const ff = FISH_TYPES.find(x=>x.id===c.fishId);
+            const col = j % 8; const row = Math.floor(j / 8);
+            const px = startX + col * (mini + gap);
+            const py = startY + row * (mini + gap);
+            // Полупрозрачный фон для добычи
+            ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(px-2, py-2, mini+4, mini+4); ctx.restore();
+            getCachedImage(ff.src, (img)=>{ ctx.drawImage(img, px, py, mini, mini); });
+          });
+        } else {
+          // девочка: миниатюры прижаты к ней и идут СПРАВА НАЛЕВО (8 в ряд)
+          const startY = rowsY;
+          const rightEdge = fx - 12; // правая граница сетки у самой девочки
+          catches.forEach((c, j) => {
+            const ff = FISH_TYPES.find(x=>x.id===c.fishId);
+            const col = j % 8; const row = Math.floor(j / 8);
+            const px = rightEdge - mini - col * (mini + gap);
+            const py = startY + row * (mini + gap);
+            // Полупрозрачный фон для добычи
+            ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(px-2, py-2, mini+4, mini+4); ctx.restore();
+            getCachedImage(ff.src, (img)=>{ ctx.drawImage(img, px, py, mini, mini); });
+          });
+        }
+      });
+    }
+
+    function renderLegend(){
+      legendEl.innerHTML = '';
+      if (!lastState) return;
+      lastState.legend.forEach(l => {
+        const div = document.createElement('div'); div.className = 'legend-item';
+        const img = document.createElement('img'); img.src = l.src; img.alt = l.name;
+        const val = document.createElement('div'); val.className = 'val'; val.textContent = String(l.value) + '$';
+        div.appendChild(img); div.appendChild(document.createTextNode(' = ')); div.appendChild(val);
+        legendEl.appendChild(div);
+      });
+    }
+
+    function renderAnswerPanel(){
+      countFields.innerHTML = '';
+      if (!lastState) return;
+      // рыбы всего по каждому типу (в воде)
+      let sumAll = 0;
+      lastState.activeFish.forEach(f => {
+        const count = lastState.countsByType.get(f.id) || 0;
+        const val = (perFish.get(f.id)||{}).value|0;
+        const totalType = count * val; sumAll += totalType;
+        const field = document.createElement('div'); field.className='count-field'; field.dataset.type=f.id;
+        const img = document.createElement('img'); img.src = f.src; img.style.width='28px'; img.style.height='28px'; img.style.objectFit='contain';
+        const label = document.createElement('div'); label.textContent = f.name + ' всего в $:'; label.style.fontSize='12px';
+        const input = document.createElement('input'); input.type='number'; input.min='0'; input.max='9999'; input.placeholder='?'; input.dataset.correctValue = String(totalType);
+        field.appendChild(img); field.appendChild(label); field.appendChild(input);
+        countFields.appendChild(field);
+      });
+      // Totals
+      const fisherValue = [0,0];
+      for (let b=0;b<FISHERS.length;b++){
+        const catches = (lastState.fisherCatches[b]||[]).map(idx => lastState.items[idx]);
+        catches.forEach(c => { const val = (perFish.get(c.fishId)||{}).value|0; fisherValue[b]+=val; });
+      }
+      const collected = fisherValue[0] + fisherValue[1];
+      const remain = Math.max(0, sumAll - collected);
+      inpTotalAll.value = ''; inpBoy.value=''; inpGirl.value=''; inpSea.value=''; inpRemain.value='';
+      totalAll.dataset.correctValue = String(collected);
+      totalBoy.dataset.correctValue = String(fisherValue[0]);
+      totalGirl.dataset.correctValue = String(fisherValue[1]);
+      totalSea.dataset.correctValue = String(sumAll);
+      totalRemain.dataset.correctValue = String(remain);
+      // сброс подсветки
+      document.querySelectorAll('.count-field, .total-field').forEach(el => el.classList.remove('correct','incorrect'));
+    }
+
+    function checkAnswers(){
+      let allCorrect = true;
+      document.querySelectorAll('.count-field').forEach(field => {
+        const input = field.querySelector('input');
+        const user = +input.value||0; const correct = +input.dataset.correctValue||0;
+        if (user===correct){ field.classList.remove('incorrect'); field.classList.add('correct'); }
+        else { field.classList.remove('correct'); field.classList.add('incorrect'); allCorrect=false; }
+      });
+      const totalPairs = [ [inpTotalAll, totalAll], [inpBoy, totalBoy], [inpGirl, totalGirl], [inpSea, totalSea], [inpRemain, totalRemain] ];
+      totalPairs.forEach(([inp, box])=>{
+        const user=+inp.value||0, correct=+box.dataset.correctValue||0;
+        if (user===correct){ box.classList.remove('incorrect'); box.classList.add('correct'); }
+        else { box.classList.remove('correct'); box.classList.add('incorrect'); allCorrect=false; }
+      });
+    }
+
+    function showAnswers(){
+      // Заполняем поля правильными значениями
+      document.querySelectorAll('.count-field').forEach(field => {
+        const input = field.querySelector('input');
+        const correct = +input.dataset.correctValue||0;
+        input.value = correct;
+        field.classList.remove('incorrect', 'correct');
+        field.classList.add('correct');
+      });
+      const totalPairs = [ [inpTotalAll, totalAll], [inpBoy, totalBoy], [inpGirl, totalGirl], [inpSea, totalSea], [inpRemain, totalRemain] ];
+      totalPairs.forEach(([inp, box])=>{
+        const correct=+box.dataset.correctValue||0;
+        inp.value = correct;
+        box.classList.remove('incorrect', 'correct');
+        box.classList.add('correct');
+      });
+    }
+
+    // События
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeSettings(); });
+    btnNew.addEventListener('click', ()=>{ closeSettings(); buildAndDraw(); });
+    btnSettings.addEventListener('click', ()=>{ openSettings(); renderFishTiles(); renderBackgroundTiles(); });
+    btnCancel.addEventListener('click', ()=> closeSettings());
+    btnApply.addEventListener('click', ()=>{ closeSettings(); buildAndDraw(); });
+    btnCheck.addEventListener('click', checkAnswers);
+    btnShowAnswers.addEventListener('click', showAnswers);
+
+    // Init
+    renderFishTiles();
+    renderBackgroundTiles();
+    resizeCanvas();
+    buildAndDraw();
+  </script>
+</body>
+</html>
+

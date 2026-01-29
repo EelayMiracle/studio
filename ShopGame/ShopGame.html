@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Магазин: Покупки и монеты</title>
+  <style>
+    html, body { margin:0; height:100%; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#182230; }
+    .topbar { position:fixed; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; background:#ffffffcc; backdrop-filter: blur(6px); border-bottom:1px solid #d8dde7; z-index:10; }
+    .title { font-weight:700; }
+    .btn { background:#2b68e5; color:#fff; border:0; padding:8px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
+    .btn:hover { opacity:.9; }
+
+    .legend-item { display:flex; align-items:center; gap:10px; background:#f6f8fe; border:1px solid #dbe3f7; border-radius:12px; padding:8px 12px; }
+    .legend-item img { width:36px; height:36px; object-fit:contain; }
+    .legend-item .val { font-weight:700; }
+
+    .side-legend { position:fixed; top:64px; right:0; bottom:180px; width:220px; padding:10px; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; align-items:stretch; justify-content:flex-start; z-index:9; }
+
+    .canvas-wrap { position:absolute; top:64px; left:0; right:220px; bottom:180px; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; }
+    .stage { position:relative; background:#f7f7fa; border:1px solid #cfd6e6; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); overflow:hidden; background-image:url('фон.jpg'); background-size:cover; background-position:center; }
+    canvas { width:100%; height:100%; display:block; }
+
+    /* Панель ответов */
+    .answer-panel { position:fixed; left:0; right:0; bottom:0; height:180px; background:#ffffff; border-top:1px solid #d8dde7; display:grid; grid-template-rows:auto auto auto; align-items:center; justify-items:center; gap:8px; padding:10px 12px; box-sizing:border-box; }
+    .answer-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px; }
+    .box { background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:8px 10px; min-width:200px; }
+    .box.correct { border-color:#16a34a; background:#dcfce7; }
+    .box.incorrect { border-color:#ef4444; background:#fee2e2; }
+    .box input { width:80px; background:transparent; border:none; outline:none; text-align:center; font-size:16px; }
+    .check-btn { background:#2b68e5; color:#fff; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
+
+    .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:20; background:rgba(0,0,0,0.35); padding:16px; }
+    .panel { width:min(980px,96vw); max-height:92vh; overflow:auto; background:#ffffff; color:#182230; border:1px solid #d8dde7; border-radius:14px; padding:16px; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    .field { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; background:#f6f8fe; border:1px solid #dbe3f7; border-radius:10px; padding:10px; }
+    .num { width:84px; padding:8px 10px; border-radius:8px; border:1px solid #c0c9e2; }
+    .tiles { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; }
+    .tile { background:#f6f8fe; border:1px solid #dbe3f7; border-radius:12px; padding:10px; display:grid; gap:6px; user-select:none; }
+    .tile img { width:48px; height:48px; object-fit:contain; justify-self:center; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">Магазин</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="btn-new" class="btn">Новая игра</button>
+      <button id="btn-settings" class="btn" style="background:#50658f;">Настройки</button>
+    </div>
+  </div>
+
+  <!-- Боковая легенда цен товаров -->
+  <div id="legend" class="side-legend"></div>
+
+  <div class="canvas-wrap">
+    <div id="stage" class="stage">
+      <canvas id="view"></canvas>
+    </div>
+  </div>
+
+  <!-- Панель ответов -->
+  <div class="answer-panel">
+    <div class="answer-row">
+      <div class="box" id="boxBoyMoney">Денег у мальчика: <input id="inpBoyMoney" type="number" placeholder="?"></div>
+      <div class="box" id="boxBoySpent">Потратил: <input id="inpBoySpent" type="number" placeholder="?"></div>
+      <div class="box" id="boxBoyLeft">Осталось: <input id="inpBoyLeft" type="number" placeholder="?"></div>
+    </div>
+    <div class="answer-row">
+      <div class="box" id="boxGirlMoney">Денег у девочки: <input id="inpGirlMoney" type="number" placeholder="?"></div>
+      <div class="box" id="boxGirlSpent">Потратила: <input id="inpGirlSpent" type="number" placeholder="?"></div>
+      <div class="box" id="boxGirlLeft">Осталось: <input id="inpGirlLeft" type="number" placeholder="?"></div>
+    </div>
+    <div class="answer-row">
+      <div class="box" id="boxTotalMoney">Всего денег: <input id="inpTotalMoney" type="number" placeholder="?"></div>
+      <div class="box" id="boxTotalSpent">Всего потратили: <input id="inpTotalSpent" type="number" placeholder="?"></div>
+      <div class="box" id="boxTotalLeft">Всего осталось: <input id="inpTotalLeft" type="number" placeholder="?"></div>
+      <div class="box" id="boxRemainGoods">Товаров ещё осталось на сумму: <input id="inpRemainGoods" type="number" placeholder="?"></div>
+      <button id="btn-check" class="check-btn">Проверить</button>
+      <button id="btn-show-answers" class="check-btn" style="background:#16a34a;">Показать ответы</button>
+    </div>
+  </div>
+
+  <!-- Настройки -->
+  <div id="overlay" class="overlay">
+    <div class="panel">
+      <h3 style="margin:0 0 10px 0;">Настройки</h3>
+      <div class="grid">
+        <div class="field">
+          <label>Сколько типов монет участвует</label>
+          <input id="participatingCoins" class="num" type="number" min="1" max="10" value="4">
+        </div>
+        <div class="field">
+          <label>Сколько типов товаров участвует</label>
+          <input id="participatingGoods" class="num" type="number" min="1" max="9" value="3">
+        </div>
+        <div class="field">
+          <label>Масштаб (%)</label>
+          <input id="scalePercent" class="num" type="number" min="60" max="300" value="140">
+        </div>
+        <div class="field">
+          <label>Всего товаров купят дети (мин)</label>
+          <input id="totalGoodsMin" class="num" type="number" min="1" max="20" value="4">
+        </div>
+        <div class="field">
+          <label>Всего товаров купят дети (макс)</label>
+          <input id="totalGoodsMax" class="num" type="number" min="1" max="20" value="8">
+        </div>
+      </div>
+      <h4 style="margin:12px 0 6px 0;">Монеты: выберите номиналы и задайте мин/макс количества</h4>
+      <div id="coinTiles" class="tiles"></div>
+      <h4 style="margin:12px 0 6px 0;">Товары: участие, мин/макс и цена за штуку</h4>
+      <div id="goodTiles" class="tiles"></div>
+      <div class="panel-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+        <button id="btn-cancel" class="btn" style="background:#8e98ad;">Отмена</button>
+        <button id="btn-apply" class="btn">Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('view');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const stage = document.getElementById('stage');
+    const wrap = document.querySelector('.canvas-wrap');
+    const legendEl = document.getElementById('legend');
+
+    // Изображения
+    const IMG_CACHE = new Map();
+    function getCachedImage(src, onReady){
+      let entry = IMG_CACHE.get(src);
+      if (entry && entry.img && entry.loaded){ if (onReady) onReady(entry.img); return entry.img; }
+      if (!entry){
+        const img = new Image(); entry = { img, loaded:false, cbs:[] }; IMG_CACHE.set(src, entry);
+        img.onload = ()=>{ entry.loaded=true; entry.cbs.forEach(cb=>cb(img)); entry.cbs=[]; };
+        img.onerror = ()=>{ entry.loaded=false; entry.cbs=[]; };
+        img.src = src;
+      }
+      if (onReady) entry.cbs.push(onReady);
+      return entry.img;
+    }
+
+    // Данные каталога
+    const COINS = [
+      { id:'c1',  value:1,  src:'./coin/1.png' },
+      { id:'c2',  value:2,  src:'./coin/2.png' },
+      { id:'c3',  value:3,  src:'./coin/3.png' },
+      { id:'c4',  value:4,  src:'./coin/4.png' },
+      { id:'c5',  value:5,  src:'./coin/5.png' },
+      { id:'c6',  value:6,  src:'./coin/6.png' },
+      { id:'c7',  value:7,  src:'./coin/7.png' },
+      { id:'c8',  value:8,  src:'./coin/8.png' },
+      { id:'c9',  value:9,  src:'./coin/9.png' },
+      { id:'c10', value:10, src:'./coin/10.png' },
+    ];
+    const GOODS = [
+      { id:'g1', name:'Конфета',        src:'./candy/конфета.png' },
+      { id:'g2', name:'Konfeta',        src:'./candy/konfeta.png' },
+      { id:'g3', name:'Булочка',        src:'./candy/булочка.png' },
+      { id:'g4', name:'Шоколад',        src:'./candy/шоколад.png' },
+      { id:'g5', name:'Кола',           src:'./candy/кола.png' },
+      { id:'g6', name:'Чизкейк',        src:'./candy/чизкейк.png' },
+      { id:'g7', name:'Крекеры',        src:'./candy/крекеры.png' },
+      { id:'g8', name:'Сок',            src:'./candy/сок.png' },
+      { id:'g9', name:'Твикс',          src:'./candy/твикс.png' },
+    ];
+    const KIDS = [
+      { id:'boy',   name:'Мальчик',  src:'./мальчик.png' },
+      { id:'girl',  name:'Девочка',  src:'./девочка.png' },
+    ];
+
+    // UI
+    const overlay = document.getElementById('overlay');
+    const coinTiles = document.getElementById('coinTiles');
+    const goodTiles = document.getElementById('goodTiles');
+    const ui = {
+      participatingCoins: document.getElementById('participatingCoins'),
+      participatingGoods: document.getElementById('participatingGoods'),
+      scalePercent: document.getElementById('scalePercent'),
+      totalGoodsMin: document.getElementById('totalGoodsMin'),
+      totalGoodsMax: document.getElementById('totalGoodsMax'),
+    };
+    const btnNew = document.getElementById('btn-new');
+    const btnSettings = document.getElementById('btn-settings');
+    const btnApply = document.getElementById('btn-apply');
+    const btnCancel = document.getElementById('btn-cancel');
+    const btnCheck = document.getElementById('btn-check');
+    const btnShowAnswers = document.getElementById('btn-show-answers');
+
+    // Поля ответов
+    const boxes = {
+      boyMoney: document.getElementById('boxBoyMoney'),
+      boySpent: document.getElementById('boxBoySpent'),
+      boyLeft: document.getElementById('boxBoyLeft'),
+      girlMoney: document.getElementById('boxGirlMoney'),
+      girlSpent: document.getElementById('boxGirlSpent'),
+      girlLeft: document.getElementById('boxGirlLeft'),
+      totalMoney: document.getElementById('boxTotalMoney'),
+      totalSpent: document.getElementById('boxTotalSpent'),
+      totalLeft: document.getElementById('boxTotalLeft'),
+      remainGoods: document.getElementById('boxRemainGoods'),
+    };
+    const inputs = {
+      boyMoney: document.getElementById('inpBoyMoney'),
+      boySpent: document.getElementById('inpBoySpent'),
+      boyLeft: document.getElementById('inpBoyLeft'),
+      girlMoney: document.getElementById('inpGirlMoney'),
+      girlSpent: document.getElementById('inpGirlSpent'),
+      girlLeft: document.getElementById('inpGirlLeft'),
+      totalMoney: document.getElementById('inpTotalMoney'),
+      totalSpent: document.getElementById('inpTotalSpent'),
+      totalLeft: document.getElementById('inpTotalLeft'),
+      remainGoods: document.getElementById('inpRemainGoods'),
+    };
+
+    function openSettings(){ overlay.style.display = 'flex'; }
+    function closeSettings(){ overlay.style.display = 'none'; }
+
+    function resizeCanvas(){
+      const cont = wrap.getBoundingClientRect();
+      const maxW = Math.max(200, cont.width - 24);
+      const maxH = Math.max(200, cont.height - 24);
+      const ratio = 16/9; let w = maxW; let h = w/ratio; if (h>maxH){ h=maxH; w=h*ratio; }
+      stage.style.width = Math.floor(w) + 'px'; stage.style.height = Math.floor(h) + 'px';
+      const rect = stage.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr); canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px'; canvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      drawScene(lastState);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Настройки по умолчанию
+    const perCoin = new Map(COINS.map(c => [c.id, { selected: c.value<=5, min:2, max:6 }]));
+    const perGood = new Map(GOODS.map(g => [g.id, { selected:true, min:2, max:6, price: g.id==='g4'?5:2 }]));
+
+    function renderCoinTiles(){
+      coinTiles.innerHTML = '';
+      COINS.forEach(c => {
+        const tile = document.createElement('div'); tile.className='tile';
+        const img = document.createElement('img'); img.src=c.src; img.alt=String(c.value); tile.appendChild(img);
+        const name = document.createElement('div'); name.style.textAlign='center'; name.textContent = c.value; tile.appendChild(name);
+        const row = document.createElement('div'); row.style.display='grid'; row.style.gridTemplateColumns='1fr 1fr'; row.style.gap='6px';
+        const minInput = document.createElement('input'); minInput.type='number'; minInput.className='num'; minInput.min='0'; minInput.max='50';
+        const maxInput = document.createElement('input'); maxInput.type='number'; maxInput.className='num'; maxInput.min='0'; maxInput.max='50';
+        const cur = perCoin.get(c.id) || {selected:false, min:0, max:0};
+        minInput.value = String(cur.min); maxInput.value = String(cur.max);
+        minInput.addEventListener('input', ()=>{ const s=perCoin.get(c.id); s.min=Math.max(0, +minInput.value|0); if (s.max < s.min){ s.max=s.min; maxInput.value=String(s.max);} });
+        maxInput.addEventListener('input', ()=>{ const s=perCoin.get(c.id); s.max=Math.max(0, +maxInput.value|0); if (s.max < s.min){ s.min=s.max; minInput.value=String(s.min);} });
+        row.appendChild(minInput); row.appendChild(maxInput);
+        const sel = document.createElement('div'); sel.style.textAlign='center'; sel.style.marginTop='6px';
+        const chk = document.createElement('input'); chk.type='checkbox'; chk.checked=!!cur.selected; chk.addEventListener('change', ()=>{ const s=perCoin.get(c.id); s.selected = chk.checked; });
+        sel.append('Участвует ', chk);
+        tile.appendChild(row); tile.appendChild(sel); coinTiles.appendChild(tile);
+      });
+    }
+
+    function renderGoodTiles(){
+      goodTiles.innerHTML = '';
+      GOODS.forEach(g => {
+        const tile = document.createElement('div'); tile.className='tile';
+        const img = document.createElement('img'); img.src=g.src; img.alt=g.name; tile.appendChild(img);
+        const name = document.createElement('div'); name.style.textAlign='center'; name.textContent = g.name; tile.appendChild(name);
+        const row = document.createElement('div'); row.style.display='grid'; row.style.gridTemplateColumns='1fr 1fr'; row.style.gap='6px';
+        const minInput = document.createElement('input'); minInput.type='number'; minInput.className='num'; minInput.min='0'; minInput.max='50';
+        const maxInput = document.createElement('input'); maxInput.type='number'; maxInput.className='num'; maxInput.min='0'; maxInput.max='50';
+        const priceInput = document.createElement('input'); priceInput.type='number'; priceInput.className='num'; priceInput.min='0'; priceInput.max='999'; priceInput.style.gridColumn='span 2';
+        const cur = perGood.get(g.id) || {selected:true, min:1, max:3, price:1};
+        minInput.value = String(cur.min); maxInput.value = String(cur.max); priceInput.value = String(cur.price);
+        minInput.addEventListener('input', ()=>{ const s=perGood.get(g.id); s.min=Math.max(0, +minInput.value|0); if (s.max < s.min){ s.max=s.min; maxInput.value=String(s.max);} });
+        maxInput.addEventListener('input', ()=>{ const s=perGood.get(g.id); s.max=Math.max(0, +maxInput.value|0); if (s.max < s.min){ s.min=s.max; minInput.value=String(s.min);} });
+        priceInput.addEventListener('input', ()=>{ const s=perGood.get(g.id); s.price=Math.max(0, +priceInput.value|0); });
+        row.appendChild(minInput); row.appendChild(maxInput); row.appendChild(priceInput);
+        const sel = document.createElement('div'); sel.style.textAlign='center'; sel.style.marginTop='6px';
+        const chk = document.createElement('input'); chk.type='checkbox'; chk.checked=!!cur.selected; chk.addEventListener('change', ()=>{ const s=perGood.get(g.id); s.selected = chk.checked; });
+        sel.append('Участвует ', chk);
+        tile.appendChild(row); tile.appendChild(sel); goodTiles.appendChild(tile);
+      });
+    }
+
+    // Helpers
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+    // Состояние
+    let lastState = null;
+
+    function buildAndDraw(){
+      // Активные монеты: если отмечено меньше, чем требуется, добираем из неотмеченных
+      const requestedCoinK = Math.max(1, (+ui.participatingCoins.value|0));
+      const selectedCoins = COINS.filter(c => (perCoin.get(c.id)||{}).selected);
+      const notSelectedCoins = COINS.filter(c => !(perCoin.get(c.id)||{}).selected);
+      const activeCoinsArr = selectedCoins.slice();
+      while (activeCoinsArr.length < requestedCoinK && notSelectedCoins.length > 0){ activeCoinsArr.push(notSelectedCoins.shift()); }
+      const coinK = Math.min(activeCoinsArr.length, requestedCoinK);
+      const activeCoins = activeCoinsArr.slice(0, coinK);
+      const coinCounts = new Map();
+      activeCoins.forEach(c => { const conf=perCoin.get(c.id); const mn=Math.max(1, conf.min|0); const mx=Math.max(mn, conf.max|0); coinCounts.set(c.id, randInt(mn, mx)); });
+
+      // Активные товары
+      const goodSelected = GOODS.filter(g => (perGood.get(g.id)||{}).selected);
+      const goodK = Math.min(goodSelected.length, Math.max(1, (+ui.participatingGoods.value|0)));
+      const activeGoods = goodSelected.slice().sort(()=>Math.random()-0.5).slice(0, goodK);
+      const prices = new Map();
+      activeGoods.forEach(g => { const conf=perGood.get(g.id); prices.set(g.id, conf.price|0); });
+
+      // Определяем общее количество товаров для покупки согласно настройкам
+      const totalGoodsMin = Math.max(1, (+ui.totalGoodsMin.value|0));
+      const totalGoodsMax = Math.max(totalGoodsMin, (+ui.totalGoodsMax.value|0));
+      const totalGoodsToBuy = randInt(totalGoodsMin, totalGoodsMax);
+
+      // Формируем склад (товар в наличии) — больше товаров, чем дети купят
+      const stock = [];
+      
+      // Сначала добавляем минимальное количество каждого типа товара
+      const goodsToProcess = [...activeGoods];
+      const addedCounts = new Map();
+      
+      // Инициализируем счетчики
+      goodsToProcess.forEach(g => addedCounts.set(g.id, 0));
+      
+      // Добавляем минимальное количество каждого типа
+      goodsToProcess.forEach(g => {
+        const conf = perGood.get(g.id);
+        const minCount = Math.max(1, conf.min); // Минимум 1 товар каждого типа
+        for (let i = 0; i < minCount; i++) {
+          stock.push({ goodId: g.id });
+        }
+        addedCounts.set(g.id, minCount);
+      });
+      
+      // Теперь добавляем дополнительные товары, чтобы на складе было больше, чем дети купят
+      const additionalGoods = Math.max(0, totalGoodsMax - totalGoodsMin + 2); // Добавляем еще товары
+      
+      for (let i = 0; i < additionalGoods; i++) {
+        const randomGood = goodsToProcess[Math.floor(Math.random() * goodsToProcess.length)];
+        const conf = perGood.get(randomGood.id);
+        const currentCount = addedCounts.get(randomGood.id);
+        
+        if (currentCount < conf.max) {
+          stock.push({ goodId: randomGood.id });
+          addedCounts.set(randomGood.id, currentCount + 1);
+        }
+      }
+      
+      shuffle(stock);
+
+      // Разделим склад на покупки для двоих (по очереди) - только часть товаров
+      const purchases = [[],[]];
+      const totals = [0,0];
+      
+      // Дети покупают только часть товаров со склада
+      const goodsToBuy = Math.min(totalGoodsToBuy, stock.length);
+      const selectedStock = stock.slice(0, goodsToBuy);
+      
+      selectedStock.forEach((item, i)=>{
+        const who = i % 2; 
+        purchases[who].push(item); 
+        totals[who] += (prices.get(item.goodId)||0);
+      });
+      
+      // Проверяем, что получилось нужное количество
+      console.log('Распределение покупок:', {
+        boy: purchases[0].length,
+        girl: purchases[1].length,
+        total: purchases[0].length + purchases[1].length,
+        totalOnStock: stock.length,
+        goodsToBuy: goodsToBuy
+      });
+
+      // Пул монет и распределение: все монеты показываем у детей поровну, по очереди
+      const coinPool = [];
+      activeCoins.forEach(c => { const n = coinCounts.get(c.id)||0; for(let i=0;i<n;i++){ coinPool.push(c.value); } });
+      shuffle(coinPool);
+      const coinsOwned = [[],[]];
+      coinPool.forEach((v, i)=>{ coinsOwned[i%2].push(v); });
+
+      // Подготовим ответы
+      const money = [0,0];
+      coinsOwned[0].forEach(v=>money[0]+=v); coinsOwned[1].forEach(v=>money[1]+=v);
+      const left = [ Math.max(0, money[0] - totals[0]), Math.max(0, money[1] - totals[1]) ];
+      const totalMoney = money[0] + money[1];
+      const totalSpent = totals[0] + totals[1];
+      // Стоимость всего склада и оставшихся товаров
+      let stockValue = 0; (stock||[]).forEach(it=>{ const pr = prices.get(it.goodId)||0; stockValue += pr; });
+      const remainGoods = Math.max(0, stockValue - totalSpent);
+
+      // Создаем goodCounts для отображения в легенде
+      const goodCounts = new Map();
+      activeGoods.forEach(g => {
+        const count = stock.filter(item => item.goodId === g.id).length;
+        goodCounts.set(g.id, count);
+        
+        // Проверяем, что каждый активный тип товара участвует
+        if (count === 0) {
+          console.warn(`Внимание: тип товара "${g.name}" не участвует в игре!`);
+        }
+      });
+      
+      lastState = { activeCoins, coinCounts, activeGoods, goodCounts, prices, stock, purchases, totals, coinsOwned, answers: { money, left, totalMoney, totalSpent, totalLeft: totalMoney-totalSpent, remainGoods } };
+      
+      // Отладочная информация в консоли
+      console.log('Настройки:', {
+        totalGoodsMin: +ui.totalGoodsMin.value,
+        totalGoodsMax: +ui.totalGoodsMax.value,
+        totalGoodsToBuy,
+        stockLength: stock.length,
+        purchases: purchases.map(p => p.length)
+      });
+      
+      // Показываем, сколько товаров каждого типа
+      console.log('Товары по типам:');
+      activeGoods.forEach(g => {
+        const count = stock.filter(item => item.goodId === g.id).length;
+        const boughtCount = selectedStock.filter(item => item.goodId === g.id).length;
+        console.log(`- ${g.name}: ${count} шт. на складе, ${boughtCount} шт. куплено`);
+      });
+      
+      renderLegend();
+      drawScene(lastState);
+      renderAnswerValues();
+    }
+
+    function renderLegend(){
+      legendEl.innerHTML = '';
+      if (!lastState) return;
+      const title = document.createElement('div'); title.textContent = 'Цены товаров:'; title.style.fontWeight='700'; title.style.margin='0 0 6px 0'; legendEl.appendChild(title);
+      lastState.activeGoods.forEach(g => {
+        const div = document.createElement('div'); div.className='legend-item';
+        const img = document.createElement('img'); img.src = g.src; img.alt = g.name;
+        const name = document.createElement('div'); name.textContent = g.name + ' = ';
+        const val = document.createElement('div'); val.className='val'; val.textContent = String(lastState.prices.get(g.id)||0);
+        div.appendChild(img); div.appendChild(name); div.appendChild(val);
+        legendEl.appendChild(div);
+      });
+    }
+
+    function drawScene(state){
+      if (!state) return;
+      ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
+      const cont = wrap.getBoundingClientRect();
+      const maxW = Math.max(200, cont.width - 24);
+      const maxH = Math.max(200, cont.height - 24);
+      const ratio = 16/9; let w = maxW; let h = w/ratio; if (h>maxH){ h=maxH; w=h*ratio; }
+      const rKid = Math.round(40 * Math.max(1, (+ui.scalePercent.value||100)/100));
+
+      // Товары (в наличии), разбросанные по полю случайно, не заходя в верхнюю полосу
+      const coinMiniCalc = 36, coinGapCalc = 8, maxCoinRowsShown = 3;
+      const excludeTop = 16 + rKid*2 + maxCoinRowsShown * (coinMiniCalc + coinGapCalc) + 20;
+      const fieldPadding = 12;
+      const stockArr = state.stock || [];
+      const goodMini = 63; const minGapGoods = 6;
+      const goodsPts = [];
+      function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+      const leftBound = fieldPadding, rightBound = canvas.clientWidth - fieldPadding - goodMini;
+      const topBound = excludeTop + fieldPadding, bottomBound = canvas.clientHeight - fieldPadding - goodMini;
+      stockArr.forEach((p)=>{
+        const gg = GOODS.find(x=>x.id===p.goodId);
+        let tries = 0; const maxTries = 400;
+        while (tries < maxTries){
+          const px = randInt(leftBound, rightBound);
+          const py = randInt(topBound, bottomBound);
+          let ok = true; for (let q of goodsPts){ const dx = q.x - px, dy = q.y - py; if (Math.hypot(dx,dy) < goodMini + minGapGoods){ ok=false; break; } }
+          if (ok){ goodsPts.push({x:px, y:py, goodId:p.goodId}); break; }
+          tries++;
+        }
+      });
+      goodsPts.forEach(pt=>{
+        const gg = GOODS.find(x=>x.id===pt.goodId);
+        getCachedImage(gg.src, (img)=>{ ctx.drawImage(img, pt.x, pt.y, goodMini, goodMini); });
+      });
+
+      // Дети: мальчик слева, девочка справа, вокруг светлый круг
+      KIDS.forEach((kid, i) => {
+        let bx; const by = 16; const R = rKid;
+        if (i===0) { bx = 16; } else { bx = canvas.clientWidth - (R*2 + 16); }
+        ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.arc(bx+R, by+R, R, 0, Math.PI*2); ctx.fill(); ctx.restore();
+        getCachedImage(kid.src, (img)=>{ ctx.drawImage(img, bx, by, R*2, R*2); });
+
+        // Покупки миниатюрами
+        const mini = 40; const gap = 10;
+        const coinMini = 36; const coinRowGap = 8; const perRowCoins = 8;
+        const myCoinsCount = (state.coinsOwned[i]||[]).length;
+        const coinRows = Math.ceil(myCoinsCount / perRowCoins);
+        const coinsBlockH = coinRows * (coinMini + coinRowGap);
+        const rowsY = by + 6 + coinsBlockH + 10;
+        const myPurchases = (state.purchases[i]||[]);
+        const startXLeft = bx + R*2 + 12;            // для мальчика — справа от него
+        const startXRightEdge = bx - 12;             // для девочки — вплотную слева от неё
+        
+        // Показываем все покупки (может быть больше 8)
+        myPurchases.forEach((p, j)=>{
+          const gg = GOODS.find(x=>x.id===p.goodId);
+          const perRow = 8; // 8 товаров в ряду
+          const col = j % perRow; 
+          const row = Math.floor(j / perRow);
+          const py = rowsY + row * (mini + gap);
+          let px;
+          if (i===0){
+            // мальчик: влево→вправо
+            px = startXLeft + col * (mini + gap);
+          } else {
+            // девочка: вправо→влево, первый товар вплотную к девочке
+            px = startXRightEdge - mini - col * (mini + gap);
+          }
+          // полупрозрачный белый фон под покупкой
+          ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(px-3, py-3, mini+6, mini+6); ctx.restore();
+          getCachedImage(gg.src, (img)=>{ ctx.drawImage(img, px, py, mini, mini); });
+        });
+
+        // Монеты рядом с ребёнком (над покупками)
+        const myCoins = (state.coinsOwned[i]||[]).slice().sort((a,b)=>b-a);
+        const coinY = by + 8; const perRow = 8;
+        if (i===0){
+          let cx = bx + R*2 + 14; let cy = coinY; myCoins.forEach((v, j)=>{
+            if (j>0 && j%perRow===0){ cy += coinMini + 8; cx = bx + R*2 + 14; }
+            const coin = COINS.find(c=>c.value===v) || COINS[0];
+            getCachedImage(coin.src, (img)=>{ ctx.drawImage(img, cx, cy, coinMini, coinMini); });
+            cx += coinMini + 8;
+          });
+        } else {
+          let cx = bx - 14 - coinMini; let cy = coinY; myCoins.forEach((v, j)=>{
+            if (j>0 && j%perRow===0){ cy += coinMini + 8; cx = bx - 14 - coinMini; }
+            const coin = COINS.find(c=>c.value===v) || COINS[0];
+            getCachedImage(coin.src, (img)=>{ ctx.drawImage(img, cx, cy, coinMini, coinMini); });
+            cx -= coinMini + 8;
+          });
+        }
+      });
+      // Панель "Товар в наличии" удалена — товары уже разбросаны по полю
+    }
+
+    function renderAnswerValues(){
+      if (!lastState) return;
+      // сброс классов и инпутов
+      Object.values(boxes).forEach(b=>b.classList.remove('correct','incorrect'));
+      Object.values(inputs).forEach(i=> i.value = '');
+      const a = lastState.answers;
+      // записать правильные значения в data-атрибуты
+      boxes.boyMoney.dataset.correctValue = String(a.money[0]);
+      boxes.boySpent.dataset.correctValue = String(lastState.totals[0]);
+      boxes.boyLeft.dataset.correctValue = String(a.left[0]);
+      boxes.girlMoney.dataset.correctValue = String(a.money[1]);
+      boxes.girlSpent.dataset.correctValue = String(lastState.totals[1]);
+      boxes.girlLeft.dataset.correctValue = String(a.left[1]);
+      boxes.totalMoney.dataset.correctValue = String(a.totalMoney);
+      boxes.totalSpent.dataset.correctValue = String(a.totalSpent);
+      boxes.totalLeft.dataset.correctValue = String(a.totalLeft);
+      boxes.remainGoods.dataset.correctValue = String(a.remainGoods);
+    }
+
+    function checkAnswers(){
+      const pairs = [
+        ['boyMoney','boxBoyMoney','inpBoyMoney'],
+        ['boySpent','boxBoySpent','inpBoySpent'],
+        ['boyLeft','boxBoyLeft','inpBoyLeft'],
+        ['girlMoney','boxGirlMoney','inpGirlMoney'],
+        ['girlSpent','boxGirlSpent','inpGirlSpent'],
+        ['girlLeft','boxGirlLeft','inpGirlLeft'],
+        ['totalMoney','boxTotalMoney','inpTotalMoney'],
+        ['totalSpent','boxTotalSpent','inpTotalSpent'],
+        ['totalLeft','boxTotalLeft','inpTotalLeft'],
+        ['remainGoods','boxRemainGoods','inpRemainGoods'],
+      ];
+      pairs.forEach(([key, boxId, inpId])=>{
+        const box = boxes[key]; const inp = inputs[key];
+        const user = +inp.value||0; const correct = +box.dataset.correctValue||0;
+        if (user===correct){ box.classList.remove('incorrect'); box.classList.add('correct'); }
+        else { box.classList.remove('correct'); box.classList.add('incorrect'); }
+      });
+    }
+
+    function showAnswers(){
+      if (!lastState) return;
+      
+      // Сбрасываем все классы стилей
+      Object.values(boxes).forEach(b=>b.classList.remove('correct','incorrect'));
+      
+      // Вписываем правильные ответы в поля
+      inputs.boyMoney.value = String(lastState.answers.money[0]);
+      inputs.boySpent.value = String(lastState.totals[0]);
+      inputs.boyLeft.value = String(lastState.answers.left[0]);
+      inputs.girlMoney.value = String(lastState.answers.money[1]);
+      inputs.girlSpent.value = String(lastState.totals[1]);
+      inputs.girlLeft.value = String(lastState.answers.left[1]);
+      inputs.totalMoney.value = String(lastState.answers.totalMoney);
+      inputs.totalSpent.value = String(lastState.answers.totalSpent);
+      inputs.totalLeft.value = String(lastState.answers.totalLeft);
+      inputs.remainGoods.value = String(lastState.answers.remainGoods);
+    }
+
+    // События
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeSettings(); });
+    btnNew.addEventListener('click', ()=>{ closeSettings(); buildAndDraw(); });
+    btnSettings.addEventListener('click', ()=>{ openSettings(); renderCoinTiles(); renderGoodTiles(); });
+    btnCancel.addEventListener('click', ()=> closeSettings());
+    btnApply.addEventListener('click', ()=>{ closeSettings(); buildAndDraw(); });
+    btnCheck.addEventListener('click', checkAnswers);
+    btnShowAnswers.addEventListener('click', showAnswers);
+
+    // Валидация полей общего количества товаров
+    ui.totalGoodsMin.addEventListener('input', ()=>{
+      const min = Math.max(1, +ui.totalGoodsMin.value|0);
+      const max = Math.max(min, +ui.totalGoodsMax.value|0);
+      ui.totalGoodsMin.value = String(min);
+      ui.totalGoodsMax.value = String(max);
+    });
+    ui.totalGoodsMax.addEventListener('input', ()=>{
+      const min = Math.max(1, +ui.totalGoodsMin.value|0);
+      const max = Math.max(min, +ui.totalGoodsMax.value|0);
+      ui.totalGoodsMax.value = String(max);
+    });
+
+    // Init
+    renderCoinTiles();
+    renderGoodTiles();
+    resizeCanvas();
+    buildAndDraw();
+  </script>
+</body>
+</html>
+
+

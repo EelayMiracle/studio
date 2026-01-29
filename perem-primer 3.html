@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перемешанный пример</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)),
+                url('img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .game-container {
+            margin-top: 20px;
+            background-color: rgba(222, 158, 255, 0.85);
+            border-radius: 20px;            
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .settings {
+            margin-bottom: 30px;
+            padding: 10px;
+            background-color: rgba(151, 135, 255, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings h2 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-group label {
+            color: #fff;
+            font-weight: bold;
+            min-width: 120px;
+            text-align: right;
+        }
+
+        .equation-container {
+            margin: 30px 0;
+            font-size: 24px;
+            min-height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tile {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            margin: 5px;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .tile.selected {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+            transform: scale(1.05);
+        }
+
+        .tile.empty {
+            background-color: rgba(245, 245, 245, 0.7);
+            border-style: dashed;
+        }
+
+        .tile.operator {
+            background-color: rgba(227, 242, 253, 0.9);
+        }
+
+        .tile.number {
+            background-color: rgba(255, 248, 225, 0.9);
+        }
+
+        .tile.equals {
+            background-color: rgba(252, 228, 236, 0.9);
+        }
+
+        .available-tiles {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(232, 245, 233, 0.85);
+            border-radius: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            min-height: 100px;
+        }
+
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+            min-width: 150px;
+			margin-bottom: 15px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        select, input {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50px;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+        }
+
+        .correct {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 20px 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .incorrect {
+            color: #f44336;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 20px 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .setting-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .setting-group label {
+                text-align: left;
+                min-width: auto;
+            }
+            
+            .tile {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>   
+    
+        
+        
+        <div class="settings">
+			<h1>Перемешанный пример <a href="index.html" class="back-button">←</a></h1>            
+            <div class="setting-group">
+                <label for="template">Модель примера:</label>
+                <select id="template">
+                    <option value="a + b = q">a + b = q</option>
+                    <option value="a - b = q">a - b = q</option>
+                    <option value="a + b - c = q">a + b - c = q</option>
+                    <option value="a + b + c = q">a + b + c = q</option>
+                    <option value="a - b - c = q">a - b - c = q</option>
+                    <option value="a * b = q">a × b = q</option>
+                    <option value="a / b = q">a ÷ b = q</option>
+                    <option value="a * b + c = q">a × b + c = q</option>
+                    <option value="a * b - c = q">a × b - c = q</option>
+                    <option value="a / b + c = q">a ÷ b + c = q</option>
+                    <option value="a / b - c = q">a ÷ b - c = q</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="minA">Минимальное A:</label>
+                <input type="number" id="minA" min="0" value="1">
+                <label for="maxA">Максимальное A:</label>
+                <input type="number" id="maxA" min="1" value="10">
+            </div>
+            <div class="setting-group">
+                <label for="minB">Минимальное B:</label>
+                <input type="number" id="minB" min="0" value="1">
+                <label for="maxB">Максимальное B:</label>
+                <input type="number" id="maxB" min="1" value="10">
+            </div>
+            <div class="setting-group">
+                <label for="minC">Минимальное C:</label>
+                <input type="number" id="minC" min="0" value="1">
+                <label for="maxC">Максимальное C:</label>
+                <input type="number" id="maxC" min="1" value="10">
+            </div>
+            <div class="setting-group">
+                <label for="minQ">Минимальное Q:</label>
+                <input type="number" id="minQ" min="0" value="1">
+                <label for="maxQ">Максимальное Q:</label>
+                <input type="number" id="maxQ" min="1" value="20">
+            </div>
+        </div>
+<div class="game-container">
+        <div class="equation-container" id="equationContainer"></div>
+        <div id="resultMessage"></div>
+
+        <div class="available-tiles" id="availableTiles"></div>
+        
+        <div class="buttons">
+            <button id="checkAnswer">Проверить</button>
+            <button id="newGame">Новая игра</button>
+            <button id="showAnswer">Показать ответ</button>
+        </div>        
+    </div>
+
+    <script>
+        let currentTemplate = '';
+        let minA, maxA, minB, maxB, minC, maxC, minQ, maxQ;
+        let equationParts = [];
+        let shuffledParts = [];
+        let selectedTileIndex = -1;
+        let correctAnswer = '';
+
+        // Запускаем игру сразу при загрузке страницы
+        window.addEventListener('DOMContentLoaded', startGame);
+        
+        document.getElementById('newGame').addEventListener('click', startGame);
+        document.getElementById('checkAnswer').addEventListener('click', checkAnswer);
+        document.getElementById('showAnswer').addEventListener('click', showAnswer);
+
+        // Обработчики изменений настроек
+        document.getElementById('template').addEventListener('change', startGame);
+        document.getElementById('minA').addEventListener('change', startGame);
+        document.getElementById('maxA').addEventListener('change', startGame);
+        document.getElementById('minB').addEventListener('change', startGame);
+        document.getElementById('maxB').addEventListener('change', startGame);
+        document.getElementById('minC').addEventListener('change', startGame);
+        document.getElementById('maxC').addEventListener('change', startGame);
+        document.getElementById('minQ').addEventListener('change', startGame);
+        document.getElementById('maxQ').addEventListener('change', startGame);
+
+        function startGame() {
+            currentTemplate = document.getElementById('template').value;
+            minA = parseInt(document.getElementById('minA').value);
+            maxA = parseInt(document.getElementById('maxA').value);
+            minB = parseInt(document.getElementById('minB').value);
+            maxB = parseInt(document.getElementById('maxB').value);
+            minC = parseInt(document.getElementById('minC').value);
+            maxC = parseInt(document.getElementById('maxC').value);
+            minQ = parseInt(document.getElementById('minQ').value);
+            maxQ = parseInt(document.getElementById('maxQ').value);
+
+            if (!validateSettings()) {
+                alert("Некорректные настройки. Убедитесь, что минимальные значения меньше максимальных.");
+                return;
+            }
+
+            if (!generateEquation()) {
+                alert("Невозможно сгенерировать пример с данными настройками. Пожалуйста, измените их.");
+                return;
+            }
+
+            shuffleParts();
+            renderGame();
+            document.getElementById('resultMessage').textContent = '';
+        }
+
+        function validateSettings() {
+            return (
+                minA <= maxA &&
+                minB <= maxB &&
+                minC <= maxC &&
+                minQ <= maxQ
+            );
+        }
+
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateEquation() {
+            const template = currentTemplate;
+            let a, b, c, q;
+            let equation = null;
+
+            for (let attempt = 0; attempt < 100; attempt++) {
+                try {
+                    if (template.includes('a + b = q')) {
+                        q = getRandomInt(minQ, maxQ);
+                        a = getRandomInt(minA, Math.min(maxA, q - minB));
+                        b = q - a;
+                        if (b < minB || b > maxB) continue;
+
+                    } else if (template.includes('a - b = q')) {
+                        a = getRandomInt(minA, maxA);
+                        q = getRandomInt(minQ, Math.min(maxQ, a - minB));
+                        b = a - q;
+
+                        if (b < minB || b > maxB) continue;
+                    } else if (template.includes('a + b - c = q')) {
+                        q = getRandomInt(minQ, maxQ);
+                        a = getRandomInt(minA, maxA);
+                        b = getRandomInt(minB, maxB);
+                        c = a + b - q;
+
+                        if (c < minC || c > maxC) continue;
+                    } else if (template.includes('a + b + c = q')) {
+                        q = getRandomInt(minQ, maxQ);
+                        a = getRandomInt(minA, maxA);
+                        b = getRandomInt(minB, maxB);
+                        c = q - a - b;
+                         if (c < minC || c > maxC) continue;
+
+                    } else if (template.includes('a - b - c = q')) {
+                        q = getRandomInt(minQ, maxQ);
+                        a = getRandomInt(Math.max(minA, q + minB + minC), maxA);
+                        b = getRandomInt(minB, maxB);
+                        c = a - b - q;
+                         if (c < minC || c > maxC) continue;
+
+                    } else if (template.includes('a * b = q')) {
+                         q = getRandomInt(minQ, maxQ);
+                         let factors = getFactors(q);
+                         if (factors.length === 0) continue;
+                         let randomFactor = factors[getRandomInt(0, factors.length - 1)];
+                         a = randomFactor[0];
+                         b = randomFactor[1];
+                          if ((a < minA || a > maxA) || (b < minB || b > maxB)) continue;
+
+                    } else if (template.includes('a / b = q')) {
+                         q = getRandomInt(minQ, maxQ);
+                         b = getRandomInt(minB, maxB);
+                         a = q * b;
+
+                        if (a < minA || a > maxA) continue;
+
+                    } else if (template.includes('a * b + c = q')) {
+                         q = getRandomInt(minQ, maxQ);
+                         a = getRandomInt(minA, maxA);
+                         b = getRandomInt(minB, maxB);
+                         c = q - a * b;
+                         if (c < minC || c > maxC) continue;
+
+                    } else if (template.includes('a * b - c = q')) {
+                         q = getRandomInt(minQ, maxQ);
+                         a = getRandomInt(minA, maxA);
+                         b = getRandomInt(minB, maxB);
+                         c = a * b - q;
+                         if (c < minC || c > maxC) continue;
+
+                    } else if (template.includes('a / b + c = q')) {
+                         q = getRandomInt(minQ, maxQ);
+                         a = getRandomInt(minA, maxA);
+                         b = getRandomInt(minB, maxB);
+                         c = q - a / b;
+                         if (c < minC || c > maxC) continue;
+
+                    } else if (template.includes('a / b - c = q')) {
+                         q = getRandomInt(minQ, maxQ);
+                         a = getRandomInt(minA, maxA);
+                         b = getRandomInt(minB, maxB);
+                         c = a / b - q;
+                         if (c < minC || c > maxC) continue;
+                    }
+
+                    equation = template
+                        .replace('a', a)
+                        .replace('b', b)
+                        .replace('*', '×')
+                        .replace('/', '÷')
+                        .replace(':', '÷');
+
+                    if (template.includes('c')) {
+                        equation = equation.replace('c', c);
+                    }
+                    equation = equation.replace('q', q);
+
+                    correctAnswer = equation;
+                    equationParts = [];
+                    let tempParts = equation.split(' ');
+
+                    for (let i = 0; i < tempParts.length; i++) {
+                        if (!isNaN(parseInt(tempParts[i]))) {
+                            for (let j = 0; j < tempParts[i].length; j++) {
+                                equationParts.push(tempParts[i][j]);
+                            }
+                        } else {
+                            equationParts.push(tempParts[i]);
+                        }
+                    }
+
+                    return true;
+
+                } catch (e) {
+                    console.error("Ошибка при генерации примера:", e);
+                }
+            }
+             return false;
+        }
+
+        function getFactors(number) {
+            let factors = [];
+            for (let i = 1; i <= Math.sqrt(number); i++) {
+                if (number % i === 0) {
+                    factors.push([i, number / i]);
+                    if (i !== number / i) {
+                        factors.push([number / i, i]);
+                    }
+                }
+            }
+            return factors;
+        }
+
+        function shuffleParts() {
+            shuffledParts = [...equationParts];
+            for (let i = shuffledParts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledParts[i], shuffledParts[j]] = [shuffledParts[j], shuffledParts[i]];
+            }
+        }
+
+        function renderGame() {
+            const equationContainer = document.getElementById('equationContainer');
+            equationContainer.innerHTML = '';
+
+            equationParts.forEach((part, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'tile empty';
+                tile.textContent = '';
+                tile.dataset.index = index;
+                tile.addEventListener('click', () => returnTile(index));
+                equationContainer.appendChild(tile);
+            });
+
+            const availableTiles = document.getElementById('availableTiles');
+            availableTiles.innerHTML = '';
+
+            shuffledParts.forEach((part, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = part;
+
+                if (['+', '-', '×', '÷', '='].includes(part)) {
+                    tile.classList.add('operator');
+                } else if (part === '=') {
+                    tile.classList.add('equals');
+                } else if (!isNaN(parseInt(part))) {
+                    tile.classList.add('number');
+                }
+
+                tile.dataset.part = part;
+                tile.dataset.index = index;
+                tile.addEventListener('click', () => selectTile(index));
+                availableTiles.appendChild(tile);
+            });
+        }
+
+        function selectTile(tileIndex) {
+            const tile = document.querySelector(`#availableTiles .tile[data-index="${tileIndex}"]`);
+            if (!tile || tile.textContent === '') return;
+
+            const emptyTiles = document.querySelectorAll('#equationContainer .tile.empty');
+            if (emptyTiles.length === 0) return;
+
+            const firstEmptyTile = emptyTiles[0];
+            firstEmptyTile.textContent = tile.textContent;
+            firstEmptyTile.classList.remove('empty');
+            firstEmptyTile.dataset.part = tile.dataset.part;
+
+            tile.textContent = '';
+            tile.dataset.part = '';
+        }
+
+        function returnTile(tileIndex) {
+            const tile = document.querySelector(`#equationContainer .tile[data-index="${tileIndex}"]`);
+            if (!tile || tile.classList.contains('empty')) return;
+
+            const part = tile.dataset.part;
+            tile.textContent = '';
+            tile.classList.add('empty');
+            tile.dataset.part = '';
+
+            const availableTiles = document.querySelectorAll('#availableTiles .tile');
+            for (let i = 0; i < availableTiles.length; i++) {
+                if (availableTiles[i].textContent === '') {
+                    availableTiles[i].textContent = part;
+                    availableTiles[i].dataset.part = part;
+                    break;
+                }
+            }
+        }
+
+        function checkAnswer() {
+            const equationTiles = document.querySelectorAll('#equationContainer .tile');
+            const userEquation = Array.from(equationTiles).map(tile => tile.textContent).join('');
+
+            let expression = userEquation.replace(/×/g, '*').replace(/÷/g, '/');
+
+            const parts = expression.split('=');
+
+            if (parts.length !== 2) {
+                document.getElementById('resultMessage').textContent = 'Некорректное уравнение';
+                document.getElementById('resultMessage').className = 'incorrect';
+                return;
+            }
+
+            const leftSide = parts[0].trim();
+            const rightSide = parts[1].trim();
+
+            if (Array.from(equationTiles).some(tile => tile.classList.contains('empty'))) {
+                document.getElementById('resultMessage').textContent = 'Заполните все клетки!';
+                document.getElementById('resultMessage').className = 'incorrect';
+                return;
+            }
+
+            try {
+                const leftValue = eval(leftSide);
+
+                if (isNaN(leftValue) || !isFinite(leftValue)) {
+                    throw new Error('Invalid left side expression');
+                }
+
+                if (leftValue == rightSide) {
+                    document.getElementById('resultMessage').textContent = 'Правильно!';
+                    document.getElementById('resultMessage').className = 'correct';
+                } else {
+                    document.getElementById('resultMessage').textContent = 'Неверно, попробуйте еще раз';
+                    document.getElementById('resultMessage').className = 'incorrect';
+                }
+
+            } catch (e) {
+                document.getElementById('resultMessage').textContent = 'Некорректное уравнение';
+                document.getElementById('resultMessage').className = 'incorrect';
+            }
+        }
+
+        function showAnswer() {
+            const equationTiles = document.querySelectorAll('#equationContainer .tile');
+            let answerIndex = 0;
+            equationParts.forEach((part, index) => {
+                equationTiles[index].textContent = part;
+                equationTiles[index].classList.remove('empty');
+                equationTiles[index].dataset.part = part;
+                answerIndex++;
+            });
+
+            const availableTiles = document.querySelectorAll('#availableTiles .tile');
+            availableTiles.forEach(tile => {
+                tile.textContent = '';
+                tile.dataset.part = '';
+            });
+
+            document.getElementById('resultMessage').textContent = `Правильный ответ: ${correctAnswer}`;
+            document.getElementById('resultMessage').className = 'correct';
+        }
+    </script>
+</body>
+</html>

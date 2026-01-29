@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математические пары</title>
+    <style>
+       body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)),
+                url('img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+        .game-container {
+            max-width: 900px;
+            margin: 20px;
+            background-color: rgba(222, 158, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .game-board {
+            display: grid;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        .math-tile {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: 40px;
+            min-width: 80px;
+        }
+        .math-tile:hover {
+            transform: scale(1.1);
+            z-index: 1;
+        }
+        .math-tile.selected {
+            box-shadow: 0 0 0 2px #4CAF50;
+        }
+        .math-tile.correct {
+            background-color: #aaffaa !important;
+        }
+        .math-tile.incorrect {
+            background-color: #ffaaaa !important;
+        }
+        .math-tile.disabled {
+            opacity: 0.5;
+            cursor: default;
+            transform: none !important;
+        }
+        .found-pairs {
+            margin-top: 20px;
+            font-size: 18px;
+            min-height: 24px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input {
+            padding: 8px;
+            font-size: 16px;
+            width: 60px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .operation-option {
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f0f0f0;
+            display: inline-block;
+            margin: 2px;
+        }
+        .operation-option.selected {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #45a049;
+        }
+        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .settings-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .operation-settings {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .operation-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .operation-title {
+            font-weight: bold;
+            min-width: 100px;
+        }
+        .number-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .number-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .number-input-group label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        .operations-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .operations-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Математические пары <a href="index.html" class="back-button">←</a></h1>
+        <div class="controls">
+            <div class="control-group">
+                <label for="pairCount">Количество пар:</label>
+                <input type="number" id="pairCount" min="4" max="12" value="8" step="4">
+            </div>
+            
+            <div class="operations-selector">
+                <span class="operation-option selected" data-operation="+">+</span>
+                <span class="operation-option selected" data-operation="-">-</span>
+                <span class="operation-option selected" data-operation="*">×</span>
+                <span class="operation-option selected" data-operation="/">÷</span>
+            </div>
+            
+            <div class="settings-container">
+                <div class="operations-grid">
+                    <div class="operation-settings" data-operation="+">
+                        <div class="operation-header">
+                            <div class="operation-title">Сложение (+)</div>
+                        </div>
+                        <div class="number-inputs">
+                            <div class="number-input-group">
+                                <label>a мин</label>
+                                <input type="number" class="a-min" min="1" value="10">
+                            </div>
+                            <div class="number-input-group">
+                                <label>a макс</label>
+                                <input type="number" class="a-max" min="1" value="50">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b мин</label>
+                                <input type="number" class="b-min" min="1" value="10">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b макс</label>
+                                <input type="number" class="b-max" min="1" value="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="operation-settings" data-operation="-">
+                        <div class="operation-header">
+                            <div class="operation-title">Вычитание (-)</div>
+                        </div>
+                        <div class="number-inputs">
+                            <div class="number-input-group">
+                                <label>a мин</label>
+                                <input type="number" class="a-min" min="1" value="20">
+                            </div>
+                            <div class="number-input-group">
+                                <label>a макс</label>
+                                <input type="number" class="a-max" min="1" value="100">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b мин</label>
+                                <input type="number" class="b-min" min="1" value="10">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b макс</label>
+                                <input type="number" class="b-max" min="1" value="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="operation-settings" data-operation="*">
+                        <div class="operation-header">
+                            <div class="operation-title">Умножение (×)</div>
+                        </div>
+                        <div class="number-inputs">
+                            <div class="number-input-group">
+                                <label>a мин</label>
+                                <input type="number" class="a-min" min="1" value="2">
+                            </div>
+                            <div class="number-input-group">
+                                <label>a макс</label>
+                                <input type="number" class="a-max" min="1" value="9">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b мин</label>
+                                <input type="number" class="b-min" min="1" value="2">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b макс</label>
+                                <input type="number" class="b-max" min="1" value="9">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="operation-settings" data-operation="/">
+                        <div class="operation-header">
+                            <div class="operation-title">Деление (÷)</div>
+                        </div>
+                        <div class="number-inputs">
+                            <div class="number-input-group">
+                                <label>a мин</label>
+                                <input type="number" class="a-min" min="1" value="10">
+                            </div>
+                            <div class="number-input-group">
+                                <label>a макс</label>
+                                <input type="number" class="a-max" min="1" value="100">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b мин</label>
+                                <input type="number" class="b-min" min="1" value="2">
+                            </div>
+                            <div class="number-input-group">
+                                <label>b макс</label>
+                                <input type="number" class="b-max" min="1" value="9">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="startGame">Новая игра</button>
+        </div>
+        <div class="game-board" id="gameBoard"></div>
+        <div class="found-pairs" id="foundPairs">Найдено пар: 0</div>
+    </div>
+
+    <script>
+        let selectedTiles = [];
+        let foundPairs = 0;
+        let totalPairs = 0;
+        let tilesData = []; // Массив для хранения данных о плитках
+        let enabledOperations = ['+', '-', '*', '/'];
+        let operationSettings = {
+            '+': { aMin: 10, aMax: 50, bMin: 10, bMax: 50 },
+            '-': { aMin: 20, aMax: 100, bMin: 10, bMax: 50 },
+            '*': { aMin: 2, aMax: 9, bMin: 2, bMax: 9 },
+            '/': { aMin: 10, aMax: 100, bMin: 2, bMax: 9 }
+        };
+
+        function getRandomLightColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 85%)`;
+        }
+
+        function calculateGridSize(totalTiles) {
+            const numRows = Math.ceil(Math.sqrt(totalTiles));
+            const numCols = Math.ceil(totalTiles / numRows);
+            return [numCols, numRows];
+        }
+
+        function getRandomInRange(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateExpression(operation) {
+    const settings = operationSettings[operation];
+    let a, b, value, expression;
+
+    switch (operation) {
+        case '+':
+            a = getRandomInRange(settings.aMin, settings.aMax);
+            b = getRandomInRange(settings.bMin, settings.bMax);
+            value = a + b;
+            expression = `${a} + ${b}`;
+            break;
+        case '-':
+            a = getRandomInRange(settings.aMin, settings.aMax);
+            b = getRandomInRange(settings.bMin, Math.min(settings.bMax, a - 1));
+            value = a - b;
+            expression = `${a} - ${b}`;
+            break;
+        case '*':
+            a = getRandomInRange(settings.aMin, settings.aMax);
+            b = getRandomInRange(settings.bMin, settings.bMax);
+            value = a * b;
+            expression = `${a} × ${b}`;
+            break;
+        case '/':
+            b = getRandomInRange(settings.bMin, settings.bMax);
+            const minA = settings.aMin;
+            const maxA = settings.aMax;
+            // Генерируем a так, чтобы a делилось на b без остатка
+            const minQuotient = Math.ceil(minA / b);
+            const maxQuotient = Math.floor(maxA / b);
+            if (minQuotient > maxQuotient) return null; // Невозможно создать выражение
+            value = getRandomInRange(minQuotient, maxQuotient);
+            a = value * b;
+            expression = `${a} ÷ ${b}`;
+            break;
+        default:
+            return null;
+    }
+
+    // Проверяем, что значения в допустимых диапазонах
+    if (
+        a < settings.aMin || a > settings.aMax ||
+        b < settings.bMin || b > settings.bMax
+    ) {
+        return null;
+    }
+
+    return { expression, value };
+}
+
+        function updateOperationSettings() {
+            document.querySelectorAll('.operation-settings').forEach(group => {
+                const operation = group.dataset.operation;
+                operationSettings[operation] = {
+                    aMin: Math.max(1, parseInt(group.querySelector('.a-min').value) || 1),
+                    aMax: Math.max(1, parseInt(group.querySelector('.a-max').value) || 1),
+                    bMin: Math.max(1, parseInt(group.querySelector('.b-min').value) || 1),
+                    bMax: Math.max(1, parseInt(group.querySelector('.b-max').value) || 1)
+                };
+                
+                // Корректируем min/max
+                if (operationSettings[operation].aMin > operationSettings[operation].aMax) {
+                    operationSettings[operation].aMin = operationSettings[operation].aMax;
+                    group.querySelector('.a-min').value = operationSettings[operation].aMin;
+                }
+                if (operationSettings[operation].bMin > operationSettings[operation].bMax) {
+                    operationSettings[operation].bMin = operationSettings[operation].bMax;
+                    group.querySelector('.b-min').value = operationSettings[operation].bMin;
+                }
+            });
+        }
+
+function generatePairs(pairCount) {
+    const pairs = [];
+    const availableOperations = [...enabledOperations];
+    
+    // Определяем группы операций
+    const multDivOps = availableOperations.filter(op => op === '*' || op === '/');
+    const addSubOps = availableOperations.filter(op => op === '+' || op === '-');
+    
+    // Количество пар для каждой группы
+    let multDivPairs = 0;
+    let addSubPairs = 0;
+    
+    // Распределяем пары в зависимости от выбранных операций
+    if (availableOperations.length === 4) {
+        // Все операции: 50% */, 50% +-
+        multDivPairs = Math.floor(pairCount / 2);
+        addSubPairs = pairCount - multDivPairs;
+    } else if (availableOperations.length === 3) {
+        if (multDivOps.length === 2) {
+            // *, / и + или -: 50% */, 50% оставшейся
+            multDivPairs = Math.floor(pairCount / 2);
+            addSubPairs = pairCount - multDivPairs;
+        } else {
+            // +, - и * или /: 50% выбранной */, 50% +-
+            multDivPairs = Math.floor(pairCount / 2);
+            addSubPairs = pairCount - multDivPairs;
+        }
+    } else if (availableOperations.length === 2) {
+        if (multDivOps.length === 2) {
+            // Только * и /
+            multDivPairs = pairCount;
+        } else if (addSubOps.length === 2) {
+            // Только + и -
+            addSubPairs = pairCount;
+        } else {
+            // Одна из */ и одна из +-
+            multDivPairs = Math.floor(pairCount / 2);
+            addSubPairs = pairCount - multDivPairs;
+        }
+    } else {
+        // Только одна операция (хотя кнопка startGame не должна позволять это)
+        multDivPairs = multDivOps.length > 0 ? pairCount : 0;
+        addSubPairs = addSubOps.length > 0 ? pairCount : 0;
+    }
+
+    // Генерируем пары для умножения/деления
+    for (let i = 0; i < multDivPairs; i++) {
+        let expr1, expr2;
+        let value;
+        let attempts = 0;
+        const maxAttempts = 100;
+
+        // Выбираем операцию для первой плитки (чередуем * и / если выбраны обе)
+        const op1 = multDivOps[i % multDivOps.length];
+        
+        // Генерируем первое выражение
+        do {
+            expr1 = generateExpression(op1);
+            attempts++;
+            if (attempts > maxAttempts) {
+                console.error("Ошибка генерации для операции:", op1);
+                return null;
+            }
+        } while (!expr1);
+
+        value = expr1.value;
+
+        // Выбираем операцию для второй плитки (из противоположной группы)
+        let op2;
+        if (addSubOps.length > 0) {
+            // Если есть +-, выбираем из них
+            op2 = addSubOps[i % addSubOps.length];
+        } else {
+            // Иначе выбираем другую */ операцию
+            op2 = multDivOps[(i + 1) % multDivOps.length];
+        }
+
+        // Генерируем второе выражение
+        attempts = 0;
+        do {
+            if (addSubOps.includes(op2)) {
+                expr2 = generateExpressionForValue(op2, value);
+            } else {
+                expr2 = generateExpressionForValue(op2, value);
+            }
+            attempts++;
+            if (attempts > maxAttempts) {
+                console.error("Не удалось создать пару для:", op2);
+                break;
+            }
+        } while (!expr2);
+
+        if (expr1 && expr2) {
+            pairs.push({ expr1, expr2 });
+        } else {
+            i--; // Повторяем попытку
+        }
+    }
+
+    // Генерируем пары для сложения/вычитания
+    for (let i = 0; i < addSubPairs; i++) {
+        let expr1, expr2;
+        let value;
+        let attempts = 0;
+        const maxAttempts = 100;
+
+        // Выбираем операцию для первой плитки (чередуем + и - если выбраны обе)
+        const op1 = addSubOps[i % addSubOps.length];
+        
+        // Генерируем первое выражение
+        do {
+            expr1 = generateExpression(op1);
+            attempts++;
+            if (attempts > maxAttempts) {
+                console.error("Ошибка генерации для операции:", op1);
+                return null;
+            }
+        } while (!expr1);
+
+        value = expr1.value;
+
+        // Выбираем операцию для второй плитки (из противоположной группы)
+        let op2;
+        if (multDivOps.length > 0) {
+            // Если есть */, выбираем из них
+            op2 = multDivOps[i % multDivOps.length];
+        } else {
+            // Иначе выбираем другую +- операцию
+            op2 = addSubOps[(i + 1) % addSubOps.length];
+        }
+
+        // Генерируем второе выражение
+        attempts = 0;
+        do {
+            if (multDivOps.includes(op2)) {
+                expr2 = generateExpressionForValue(op2, value);
+            } else {
+                expr2 = generateExpressionForValue(op2, value);
+            }
+            attempts++;
+            if (attempts > maxAttempts) {
+                console.error("Не удалось создать пару для:", op2);
+                break;
+            }
+        } while (!expr2);
+
+        if (expr1 && expr2) {
+            pairs.push({ expr1, expr2 });
+        } else {
+            i--; // Повторяем попытку
+        }
+    }
+
+    return pairs;
+}
+// Новая функция для генерации выражения с заданным значением
+function generateExpressionForValue(operation, targetValue) {
+    const settings = operationSettings[operation];
+    let a, b, expression;
+
+    switch (operation) {
+        case '+':
+            a = getRandomInRange(
+                settings.aMin,
+                Math.min(settings.aMax, targetValue - settings.bMin)
+            );
+            b = targetValue - a;
+            if (b < settings.bMin || b > settings.bMax) return null;
+            expression = `${a} + ${b}`;
+            break;
+        case '-':
+            b = getRandomInRange(
+                settings.bMin,
+                Math.min(settings.bMax, targetValue)
+            );
+            a = targetValue + b;
+            if (a < settings.aMin || a > settings.aMax) return null;
+            expression = `${a} - ${b}`;
+            break;
+        case '*':
+            // Находим все делители targetValue в диапазоне bMin..bMax
+            const possibleB = [];
+            for (let bCandidate = settings.bMin; bCandidate <= settings.bMax; bCandidate++) {
+                if (targetValue % bCandidate === 0) {
+                    const aCandidate = targetValue / bCandidate;
+                    if (aCandidate >= settings.aMin && aCandidate <= settings.aMax) {
+                        possibleB.push(bCandidate);
+                    }
+                }
+            }
+            if (possibleB.length === 0) return null;
+            b = possibleB[Math.floor(Math.random() * possibleB.length)];
+            a = targetValue / b;
+            expression = `${a} × ${b}`;
+            break;
+        case '/':
+            b = getRandomInRange(settings.bMin, settings.bMax);
+            a = targetValue * b;
+            if (a < settings.aMin || a > settings.aMax) return null;
+            expression = `${a} ÷ ${b}`;
+            break;
+        default:
+            return null;
+    }
+
+    return { expression, value: targetValue };
+}
+
+        function startGame() {
+            const pairCount = parseInt(document.getElementById('pairCount').value);
+            if (pairCount < 4 || pairCount > 12 || pairCount % 2 !== 0) {
+                alert("Выберите четное количество пар от 4 до 12!");
+                return;
+            }
+
+            // Получаем выбранные операции
+            enabledOperations = [];
+            document.querySelectorAll('.operation-option.selected').forEach(opt => {
+                enabledOperations.push(opt.dataset.operation);
+            });
+
+            if (enabledOperations.length === 0) {
+                alert("Выберите хотя бы одну операцию!");
+                return;
+            }
+
+             updateOperationSettings();
+
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            document.getElementById('foundPairs').innerHTML = 'Найдено пар: 0';
+            foundPairs = 0;
+            totalPairs = pairCount;
+            tilesData = [];
+
+            // Генерируем пары выражений
+            const pairs = generatePairs(pairCount);
+            
+            tilesData = [];
+
+            pairs.forEach((pair, index) => {
+                tilesData.push({ text: pair.expr1.expression, value: pair.expr1.value, id: index });
+                tilesData.push({ text: pair.expr2.expression, value: pair.expr2.value, id: index });
+            });
+
+            // Перемешиваем плитки
+            tilesData.sort(() => Math.random() - 0.5);
+
+            // Рассчитываем размер сетки
+            const totalTiles = tilesData.length;
+            const [cols, rows] = calculateGridSize(totalTiles);
+            gameBoard.style.gridTemplateColumns = `repeat(${cols}, 100px)`;
+            gameBoard.style.gridTemplateRows = `repeat(${rows}, 70px)`;
+
+            // Создаём игровое поле
+            tilesData.forEach(tile => {
+                const tileElement = document.createElement('div');
+                tileElement.className = 'math-tile';
+                tileElement.textContent = tile.text;
+                tileElement.dataset.value = tile.value;
+                tileElement.dataset.tileId = tile.id; // Добавляем уникальный ID
+                tileElement.style.backgroundColor = getRandomLightColor();
+                tileElement.addEventListener('click', () => selectTile(tileElement));
+                gameBoard.appendChild(tileElement);
+            });
+
+            selectedTiles = [];
+        }
+
+        function selectTile(element) {
+            if (element.classList.contains('disabled')) return;
+
+            if (selectedTiles.includes(element)) {
+                element.classList.remove('selected');
+                selectedTiles = selectedTiles.filter(el => el !== element);
+                return;
+            }
+
+            if (selectedTiles.length >= 2) {
+                selectedTiles.forEach(tile => tile.classList.remove('selected'));
+                selectedTiles = [];
+            }
+
+            element.classList.add('selected');
+            selectedTiles.push(element);
+
+            if (selectedTiles.length === 2) {
+                checkForMatch();
+            }
+        }
+
+         function checkForMatch() {
+            const [tile1, tile2] = selectedTiles;
+            const value1 = parseFloat(tile1.dataset.value);
+            const value2 = parseFloat(tile2.dataset.value);
+            const id1 = tile1.dataset.tileId;
+            const id2 = tile2.dataset.tileId;
+
+            if (value1 === value2 && id1 === id2) {
+                markAsFound(selectedTiles);
+            } else {
+                markAsIncorrect(selectedTiles);
+            }
+        }
+
+
+        function markAsFound(tiles) {
+            tiles.forEach(el => {
+                el.classList.remove('selected');
+                el.classList.add('correct');
+                setTimeout(() => {
+                    el.classList.remove('correct');
+                    el.classList.add('disabled');
+                    el.style.backgroundColor = ''; // Убираем цвет
+                    el.style.boxShadow = 'none'; // Убираем тень
+                }, 500);
+            });
+
+            foundPairs++;
+            updateFoundPairs();
+            selectedTiles = [];
+        }
+
+
+        function markAsIncorrect(tiles) {
+            tiles.forEach(el => el.classList.add('incorrect'));
+            setTimeout(() => {
+                tiles.forEach(el => {
+                    el.classList.remove('selected', 'incorrect');
+                });
+                selectedTiles = [];
+            }, 1000);
+        }
+
+        function updateFoundPairs() {
+            const foundPairsElement = document.getElementById('foundPairs');
+            foundPairsElement.innerHTML = `Найдено пар: ${foundPairs} из ${totalPairs}`;
+            if (foundPairs === totalPairs) {
+                setTimeout(() => {
+                    alert("Поздравляем! Вы нашли все пары!");
+                }, 500);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('startGame').addEventListener('click', startGame);
+
+            document.querySelectorAll('.operation-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                });
+            });
+
+            startGame();
+        });
+    </script>
+</body>
+</html>

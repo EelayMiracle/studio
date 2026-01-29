@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorme - Игра с цветами</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1)),
+                url('img/f1.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(110, 142, 251, 0.8), rgba(167, 119, 227, 0.3));
+            z-index: -1;
+        }
+        
+        .game-container {
+            background-color: rgba(222, 158, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .settings {
+            background-color: #9787FF;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 95%;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .settings label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .settings input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .card-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .card {
+            width: 80px;
+            height: 80px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 3px solid #333;
+        }
+        
+        .card-front {
+            background-color: #ccc;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        .card.correct {
+            box-shadow: 0 0 15px green;
+        }
+        
+        .card.incorrect {
+            box-shadow: 0 0 15px red;
+        }
+        
+        .dice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .dice {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+        }
+        
+        .dice-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .stat {
+            background-color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 100px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 5px;
+            margin-bottom: 25px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .game-message {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            min-height: 27px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+            border-radius: 50%;
+            text-decoration: none;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .target-pattern {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .target-pattern h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .target-grid {
+            display: inline-grid;
+            gap: 2px;
+            border: 2px solid #333;
+            padding: 5px;
+            background-color: #333;
+        }
+        
+        .target-cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .game-grid-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .game-grid-with-circles {
+            display: grid;
+            gap: 2px;
+            border: 2px solid #333;
+            padding: 5px;
+            background-color: #333;
+        }
+        
+        .color-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        
+        .color-circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+        
+        .color-circle.active {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+        
+        .game-grid {
+            display: grid;
+            gap: 2px;
+            border: 2px solid #333;
+            padding: 5px;
+            background-color: #333;
+        }
+        
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: white;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .circle-cell {
+            width: 50px;
+            height: 50px;
+            background-color: transparent;
+            border: 1px solid transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .cell.animating {
+            animation: colorFill 0.3s ease-out;
+        }
+        
+        @keyframes colorFill {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .cell:hover {
+            border-color: #666;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .new-game-btn {
+            background-color: #2196F3;
+        }
+        
+        .new-game-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .victory-message {
+            color: #4CAF50;
+            font-size: 24px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .instructions p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>    
+    <div class="game-container">
+        <h1>Colorme <a href="index.html" class="back-button">←</a></h1>
+        
+        <div class="instructions">
+            <h3>Как играть:</h3>
+            <p>1. Выберите размер поля</p>
+            <p>2. Нажмите "Новая игра" - программа создаст случайный рисунок</p>
+            <p>3. Кликайте на цветные кружки слева и сверху, чтобы окрашивать строки и столбцы</p>
+            <p>4. Воссоздайте показанный рисунок!</p>
+        </div>
+        
+        <div class="settings">
+            <h2>Настройки игры</h2>
+            <div class="settings-row">
+                <div class="settings-group">
+                    <label for="grid-width">Ширина поля</label>
+                    <input type="number" id="grid-width" min="3" max="10" value="5">
+                </div>
+                <div class="settings-group">
+                    <label for="grid-height">Высота поля</label>
+                    <input type="number" id="grid-height" min="3" max="10" value="5">
+                </div>
+            </div>
+            <button id="new-game-btn" class="new-game-btn">Новая игра</button>
+        </div>
+        
+        <!-- Сообщение о победе над задуманным рисунком -->
+        <div class="victory-message-area" id="victory-message-area" style="min-height: 60px; margin: 15px 0; display: flex; justify-content: center; align-items: center;"></div>
+        
+        <div class="target-pattern" id="target-pattern" style="display: none;">
+            <h3>Воссоздайте этот рисунок:</h3>
+            <div class="target-grid" id="target-grid"></div>
+        </div>
+        
+        <div class="game-message" id="game-message">Нажмите "Новая игра" чтобы начать!</div>
+        
+        <div class="game-area" id="game-area" style="display: none;">
+            <div class="game-grid" id="game-grid"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="undo-btn" style="display: none;">Отменить</button>
+            <button id="clear-btn" style="display: none;">Очистить</button>
+            <button id="new-game-during-btn" class="new-game-btn" style="display: none;">Новая игра</button>
+            <button id="new-game-win-btn" class="new-game-btn" style="display: none;">Новая игра</button>
+        </div>
+    </div>
+    <script>
+        // Настройки игры
+        let gameSettings = {
+            width: 5,
+            height: 5
+        };
+
+        // Состояние игры
+        let gameState = {
+            targetPattern: [],
+            currentPattern: [],
+            colors: ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080'],
+            isGameActive: false,
+            moves: 0,
+            usedCircles: { rows: [], columns: [] },
+            circleColors: { rows: [], columns: [] },
+            moveHistory: []
+        };
+
+        // Элементы DOM
+        const gridWidthInput = document.getElementById('grid-width');
+        const gridHeightInput = document.getElementById('grid-height');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const newGameDuringBtn = document.getElementById('new-game-during-btn');
+        const newGameWinBtn = document.getElementById('new-game-win-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const gameMessage = document.getElementById('game-message');
+        const targetPattern = document.getElementById('target-pattern');
+        const targetGrid = document.getElementById('target-grid');
+        const gameArea = document.getElementById('game-area');
+        const gameGrid = document.getElementById('game-grid');
+
+        // Инициализация игры
+        function initGame() {
+            gameSettings.width = Math.min(10, Math.max(3, parseInt(gridWidthInput.value) || 5));
+            gameSettings.height = Math.min(10, Math.max(3, parseInt(gridHeightInput.value) || 5));
+            
+            gridWidthInput.value = gameSettings.width;
+            gridHeightInput.value = gameSettings.height;
+            
+            // Сбрасываем состояние
+            gameState.targetPattern = [];
+            gameState.currentPattern = [];
+            gameState.isGameActive = false;
+            gameState.moves = 0;
+            gameState.usedCircles = { rows: [], columns: [] };
+            gameState.circleColors = { rows: [], columns: [] };
+            gameState.moveHistory = [];
+            
+            // Создаем пустые паттерны
+            for (let i = 0; i < gameSettings.height; i++) {
+                gameState.targetPattern[i] = [];
+                gameState.currentPattern[i] = [];
+                for (let j = 0; j < gameSettings.width; j++) {
+                    gameState.targetPattern[i][j] = 0;
+                    gameState.currentPattern[i][j] = 0;
+                }
+            }
+            
+            // Генерируем случайный рисунок
+            generateRandomPattern();
+            
+            // Создаем игровое поле
+            createGameField();
+            
+            // Показываем элементы
+            targetPattern.style.display = 'block';
+            gameArea.style.display = 'block';
+            undoBtn.style.display = 'inline-block';
+            clearBtn.style.display = 'inline-block';
+            newGameDuringBtn.style.display = 'inline-block';
+            newGameWinBtn.style.display = 'none';
+            
+            gameState.isGameActive = true;
+            gameMessage.textContent = "Воссоздайте показанный рисунок!";
+            
+            // Очищаем область победного сообщения
+            const victoryArea = document.getElementById('victory-message-area');
+            victoryArea.innerHTML = '';
+            
+            // Отладочная информация
+            console.log('=== ОТЛАДКА ИГРЫ ===');
+            console.log('Использованные кружки строк:', gameState.usedCircles.rows);
+            console.log('Использованные кружки столбцов:', gameState.usedCircles.columns);
+            console.log('Цвета кружков строк:', gameState.circleColors.rows);
+            console.log('Цвета кружков столбцов:', gameState.circleColors.columns);
+            console.log('Целевой рисунок:');
+            gameState.targetPattern.forEach((row, i) => {
+                console.log(`Строка ${i}:`, row);
+            });
+            console.log('Доступные цвета:', gameState.colors);
+            console.log('==================');
+        }
+
+        // Генерация случайного рисунка
+        function generateRandomPattern() {
+            // Определяем общее количество кружков для более сложной игры
+            const totalCells = gameSettings.width * gameSettings.height;
+            const minCircles = Math.max(3, Math.floor(totalCells * 0.3)); // Минимум 30% от общего числа клеток
+            const maxCircles = Math.min(gameSettings.width + gameSettings.height, Math.floor(totalCells * 0.7)); // Максимум 70%
+            const totalCircles = Math.floor(Math.random() * (maxCircles - minCircles + 1)) + minCircles;
+            
+            console.log(`Генерируем паттерн с ${totalCircles} кружками (мин: ${minCircles}, макс: ${maxCircles})`);
+            
+            // Выбираем случайное распределение между строками и столбцами
+            const maxRows = Math.min(gameSettings.height, totalCircles);
+            const maxCols = Math.min(gameSettings.width, totalCircles);
+            const minRowsNeeded = Math.max(1, totalCircles - maxCols);
+            const maxRowsAllowed = Math.min(maxRows, totalCircles - 1);
+            
+            const numRows = Math.floor(Math.random() * (maxRowsAllowed - minRowsNeeded + 1)) + minRowsNeeded;
+            const numColumns = totalCircles - numRows;
+            
+            console.log(`Строк: ${numRows}, Столбцов: ${numColumns}`);
+            
+            // Выбираем случайные строки и столбцы
+            const usedRows = [];
+            const usedColumns = [];
+            
+            while (usedRows.length < numRows) {
+                const row = Math.floor(Math.random() * gameSettings.height);
+                if (!usedRows.includes(row)) {
+                    usedRows.push(row);
+                }
+            }
+            
+            while (usedColumns.length < numColumns) {
+                const col = Math.floor(Math.random() * gameSettings.width);
+                if (!usedColumns.includes(col)) {
+                    usedColumns.push(col);
+                }
+            }
+            
+            // Сохраняем использованные кружки
+            gameState.usedCircles.rows = usedRows;
+            gameState.usedCircles.columns = usedColumns;
+            
+            // Назначаем цвета кружкам
+            usedRows.forEach(row => {
+                const colorIndex = Math.floor(Math.random() * gameState.colors.length);
+                gameState.circleColors.rows[row] = colorIndex;
+            });
+            
+            usedColumns.forEach(col => {
+                const colorIndex = Math.floor(Math.random() * gameState.colors.length);
+                gameState.circleColors.columns[col] = colorIndex;
+            });
+            
+            // Теперь создаем сложный паттерн путем симуляции случайных кликов
+            generateComplexPattern(usedRows, usedColumns);
+        }
+        
+        // Создание сложного паттерна через симуляцию кликов
+        function generateComplexPattern(usedRows, usedColumns) {
+            // Создаем список всех доступных кружков
+            const allCircles = [];
+            usedRows.forEach(row => allCircles.push({type: 'row', index: row}));
+            usedColumns.forEach(col => allCircles.push({type: 'column', index: col}));
+            
+            // Перемешиваем список для случайного порядка
+            for (let i = allCircles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allCircles[i], allCircles[j]] = [allCircles[j], allCircles[i]];
+            }
+            
+            // Определяем количество кликов (от 1 до 3 раз по каждому кружку)
+            const clickSequence = [];
+            allCircles.forEach(circle => {
+                const clicks = Math.floor(Math.random() * 3) + 1; // 1-3 клика
+                for (let i = 0; i < clicks; i++) {
+                    clickSequence.push({...circle});
+                }
+            });
+            
+            // Дополнительно перемешиваем последовательность кликов
+            for (let i = clickSequence.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [clickSequence[i], clickSequence[j]] = [clickSequence[j], clickSequence[i]];
+            }
+            
+            console.log('Последовательность кликов:', clickSequence);
+            
+            // Симулируем клики для создания финального паттерна
+            clickSequence.forEach(click => {
+                if (click.type === 'row') {
+                    const colorIndex = gameState.circleColors.rows[click.index];
+                    for (let j = 0; j < gameSettings.width; j++) {
+                        gameState.targetPattern[click.index][j] = colorIndex + 1;
+                    }
+                } else {
+                    const colorIndex = gameState.circleColors.columns[click.index];
+                    for (let i = 0; i < gameSettings.height; i++) {
+                        gameState.targetPattern[i][click.index] = colorIndex + 1;
+                    }
+                }
+            });
+            
+            console.log('Финальный паттерн создан');
+        }
+
+        // Создание игрового поля
+        function createGameField() {
+            // Очищаем поля
+            targetGrid.innerHTML = '';
+            gameGrid.innerHTML = '';
+            
+            // Настраиваем сетки
+            targetGrid.style.gridTemplateColumns = `repeat(${gameSettings.width}, 40px)`;
+            targetGrid.style.gridTemplateRows = `repeat(${gameSettings.height}, 40px)`;
+            
+            // Основная сетка с дополнительным рядом для кружков
+            gameGrid.style.gridTemplateColumns = `repeat(${gameSettings.width + 1}, 50px)`;
+            gameGrid.style.gridTemplateRows = `repeat(${gameSettings.height + 1}, 50px)`;
+            
+            // Создаем целевой рисунок
+            for (let i = 0; i < gameSettings.height; i++) {
+                for (let j = 0; j < gameSettings.width; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'target-cell';
+                    cell.style.backgroundColor = gameState.targetPattern[i][j] > 0 
+                        ? gameState.colors[gameState.targetPattern[i][j] - 1] 
+                        : 'white';
+                    targetGrid.appendChild(cell);
+                }
+            }
+            
+            // Создаем расширенное игровое поле с местами для кружков
+            for (let i = 0; i <= gameSettings.height; i++) {
+                for (let j = 0; j <= gameSettings.width; j++) {
+                    const cell = document.createElement('div');
+                    
+                    if (i === 0 && j === 0) {
+                        // Левый верхний угол - пустая клетка
+                        cell.className = 'circle-cell';
+                    } else if (i === 0) {
+                        // Верхняя строка - место для кружков столбцов
+                        cell.className = 'circle-cell';
+                        cell.dataset.type = 'column-circle';
+                        cell.dataset.index = j - 1;
+                    } else if (j === 0) {
+                        // Левый столбец - место для кружков строк
+                        cell.className = 'circle-cell';
+                        cell.dataset.type = 'row-circle';
+                        cell.dataset.index = i - 1;
+                    } else {
+                        // Обычные игровые клетки
+                        cell.className = 'cell';
+                        cell.dataset.row = i - 1;
+                        cell.dataset.col = j - 1;
+                        cell.style.backgroundColor = 'white';
+                    }
+                    
+                    gameGrid.appendChild(cell);
+                }
+            }
+            
+            // Размещаем кружки в соответствующих клетках сверху
+            const totalRowCircles = gameState.usedCircles.rows.length;
+            let circleNumber = totalRowCircles + 1;
+            
+            // Находим клетки для кружков столбцов
+            const columnCircleCells = gameGrid.querySelectorAll('[data-type="column-circle"]');
+            columnCircleCells.forEach(cell => {
+                const colIndex = parseInt(cell.dataset.index);
+                if (gameState.usedCircles.columns.includes(colIndex)) {
+                    const circle = document.createElement('div');
+                    circle.className = 'color-circle';
+                    circle.dataset.type = 'column';
+                    circle.dataset.index = colIndex;
+                    
+                    const colorIndex = gameState.circleColors.columns[colIndex];
+                    const color = gameState.colors[colorIndex];
+                    circle.style.backgroundColor = color;
+                    circle.textContent = circleNumber++;
+                    circle.addEventListener('click', () => handleColorClick('column', colIndex));
+                    
+                    cell.appendChild(circle);
+                }
+            });
+            
+            // Размещаем кружки в соответствующих клетках слева
+            const usedRowsSorted = [...gameState.usedCircles.rows].sort((a, b) => b - a);
+            let rowNumber = 1;
+            const rowNumbers = {};
+            
+            usedRowsSorted.forEach(rowIndex => {
+                rowNumbers[rowIndex] = rowNumber++;
+            });
+            
+            // Находим клетки для кружков строк
+            const rowCircleCells = gameGrid.querySelectorAll('[data-type="row-circle"]');
+            rowCircleCells.forEach(cell => {
+                const rowIndex = parseInt(cell.dataset.index);
+                if (gameState.usedCircles.rows.includes(rowIndex)) {
+                    const circle = document.createElement('div');
+                    circle.className = 'color-circle';
+                    circle.dataset.type = 'row';
+                    circle.dataset.index = rowIndex;
+                    
+                    const colorIndex = gameState.circleColors.rows[rowIndex];
+                    const color = gameState.colors[colorIndex];
+                    circle.style.backgroundColor = color;
+                    circle.textContent = rowNumbers[rowIndex];
+                    circle.addEventListener('click', () => handleColorClick('row', rowIndex));
+                    
+                    cell.appendChild(circle);
+                }
+            });
+        }
+
+        // Обработка клика по цветному кружку
+        function handleColorClick(type, index) {
+            if (!gameState.isGameActive) return;
+            
+            gameState.moves++;
+            // Используем сохраненный цвет кружка
+            const colorIndex = type === 'row' ? gameState.circleColors.rows[index] : gameState.circleColors.columns[index];
+            const color = gameState.colors[colorIndex];
+            
+            console.log(`Клик по ${type} ${index}: используем цвет ${colorIndex} (${color})`);
+            
+            // Сохраняем предыдущее состояние для отмены
+            const previousPattern = gameState.currentPattern.map(row => [...row]);
+            gameState.moveHistory.push({
+                type: type,
+                index: index,
+                colorIndex: colorIndex,
+                previousPattern: previousPattern
+            });
+            
+            if (type === 'row') {
+                // Окрашиваем строку с анимацией
+                for (let j = 0; j < gameSettings.width; j++) {
+                    setTimeout(() => {
+                        gameState.currentPattern[index][j] = colorIndex + 1;
+                        // Новая формула для расширенной сетки
+                        const cellIndex = (index + 1) * (gameSettings.width + 1) + (j + 1);
+                        const cell = gameGrid.children[cellIndex];
+                        cell.classList.add('animating');
+                        cell.style.backgroundColor = color;
+                        
+                        // Убираем класс анимации после завершения
+                        setTimeout(() => {
+                            cell.classList.remove('animating');
+                        }, 300);
+                    }, j * 50); // Задержка между клетками
+                }
+            } else {
+                // Окрашиваем столбец с анимацией
+                for (let i = 0; i < gameSettings.height; i++) {
+                    setTimeout(() => {
+                        gameState.currentPattern[i][index] = colorIndex + 1;
+                        // Новая формула для расширенной сетки
+                        const cellIndex = (i + 1) * (gameSettings.width + 1) + (index + 1);
+                        const cell = gameGrid.children[cellIndex];
+                        cell.classList.add('animating');
+                        cell.style.backgroundColor = color;
+                        
+                        // Убираем класс анимации после завершения
+                        setTimeout(() => {
+                            cell.classList.remove('animating');
+                        }, 300);
+                    }, i * 50); // Задержка между клетками
+                }
+            }
+            
+            // Анимация кружка
+            const circleSelector = type === 'row' ? `[data-type="row"][data-index="${index}"]` : `[data-type="column"][data-index="${index}"]`;
+            const circle = gameGrid.querySelector(circleSelector);
+            if (circle) {
+                circle.classList.add('active');
+                setTimeout(() => circle.classList.remove('active'), 200);
+            }
+            
+            // Автоматическая проверка с задержкой после анимации
+            const maxDelay = Math.max(gameSettings.width, gameSettings.height) * 50 + 100;
+            setTimeout(() => {
+                checkWin();
+            }, maxDelay);
+        }
+
+        // Проверка совпадения рисунков
+        function checkPattern() {
+            if (!gameState.isGameActive) return false;
+            
+            console.log('=== ПРОВЕРКА ПАТТЕРНА ===');
+            console.log('Целевой паттерн:', gameState.targetPattern);
+            console.log('Текущий паттерн:', gameState.currentPattern);
+            
+            for (let i = 0; i < gameSettings.height; i++) {
+                for (let j = 0; j < gameSettings.width; j++) {
+                    if (gameState.currentPattern[i][j] !== gameState.targetPattern[i][j]) {
+                        console.log(`Несовпадение в позиции [${i}][${j}]: текущий=${gameState.currentPattern[i][j]}, целевой=${gameState.targetPattern[i][j]}`);
+                        return false;
+                    }
+                }
+            }
+            console.log('Паттерны совпадают!');
+            return true;
+        }
+
+
+        // Проверка победы
+        function checkWin() {
+            if (checkPattern()) {
+                gameState.isGameActive = false;
+                
+                // Показываем поздравление над задуманным рисунком
+                const victoryArea = document.getElementById('victory-message-area');
+                victoryArea.innerHTML = `<div class="victory-message">Поздравляем! Вы выиграли за ${gameState.moves} ходов!</div>`;
+                
+                // Обычное сообщение остается пустым
+                gameMessage.textContent = '';
+                
+                // Скрываем кнопки управления и показываем кнопку новой игры
+                undoBtn.style.display = 'none';
+                clearBtn.style.display = 'none';
+                newGameDuringBtn.style.display = 'none';
+                newGameWinBtn.style.display = 'inline-block';
+            } else {
+                gameMessage.textContent = `Попробуйте еще! (Ходов: ${gameState.moves})`;
+            }
+        }
+
+        // Отменить последнее действие
+        function undoLastMove() {
+            if (!gameState.isGameActive || gameState.moveHistory.length === 0) return;
+            
+            const lastMove = gameState.moveHistory.pop();
+            gameState.currentPattern = lastMove.previousPattern;
+            gameState.moves--;
+            
+            // Обновляем визуальное состояние
+            for (let i = 0; i < gameSettings.height; i++) {
+                for (let j = 0; j < gameSettings.width; j++) {
+                    const cellIndex = (i + 1) * (gameSettings.width + 1) + (j + 1);
+                    const cell = gameGrid.children[cellIndex];
+                    if (gameState.currentPattern[i][j] > 0) {
+                        cell.style.backgroundColor = gameState.colors[gameState.currentPattern[i][j] - 1];
+                    } else {
+                        cell.style.backgroundColor = 'white';
+                    }
+                }
+            }
+            
+            gameMessage.textContent = `Отменено! (Ходов: ${gameState.moves})`;
+        }
+
+        // Очистить поле
+        function clearField() {
+            if (!gameState.isGameActive) return;
+            
+            // Сбрасываем текущий паттерн
+            for (let i = 0; i < gameSettings.height; i++) {
+                for (let j = 0; j < gameSettings.width; j++) {
+                    gameState.currentPattern[i][j] = 0;
+                    const cellIndex = (i + 1) * (gameSettings.width + 1) + (j + 1);
+                    const cell = gameGrid.children[cellIndex];
+                    cell.style.backgroundColor = 'white';
+                }
+            }
+            
+            gameState.moves = 0;
+            gameState.moveHistory = [];
+            gameMessage.textContent = "Поле очищено! Начните заново.";
+        }
+
+        // Слушатели событий
+        newGameBtn.addEventListener('click', initGame);
+        newGameDuringBtn.addEventListener('click', initGame);
+        newGameWinBtn.addEventListener('click', initGame);
+        undoBtn.addEventListener('click', undoLastMove);
+        clearBtn.addEventListener('click', clearField);
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            gridWidthInput.value = gameSettings.width;
+            gridHeightInput.value = gameSettings.height;
+        });
+    </script>
+</body>
+</html>
