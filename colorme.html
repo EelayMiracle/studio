@@ -202,20 +202,34 @@
         }
         
         button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
+            padding: 0;
+            background-color: transparent;
             color: white;
-            border: none;
-            border-radius: 5px;
+            border: 2px solid #000;
+            border-radius: 0;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             margin: 5px;
             margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            box-shadow: none;
         }
         
         button:hover {
-            background-color: #45a049;
+            border-color: #666;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .icon-btn {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            display: block;
         }
         
         .game-message {
@@ -378,18 +392,28 @@
             justify-content: center;
         }
         
-        .new-game-btn {
-            background-color: #2196F3;
-        }
-        
-        .new-game-btn:hover {
-            background-color: #1976D2;
+        .victory-message-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+            height: 60px;
+            overflow: hidden;
         }
         
         .victory-message {
             color: #4CAF50;
             font-size: 24px;
             animation: pulse 1s infinite;
+            text-align: center;
+            padding: 5px 10px;
+            margin: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            max-width: 90%;
         }
         
         @keyframes pulse {
@@ -419,16 +443,7 @@
 </head>
 <body>    
     <div class="game-container">
-        <h1>Colorme <a href="index.html" class="back-button">←</a></h1>
-        
-        <div class="instructions">
-            <h3>Как играть:</h3>
-            <p>1. Выберите размер поля</p>
-            <p>2. Нажмите "Новая игра" - программа создаст случайный рисунок</p>
-            <p>3. Кликайте на цветные кружки слева и сверху, чтобы окрашивать строки и столбцы</p>
-            <p>4. Воссоздайте показанный рисунок!</p>
-        </div>
-        
+        <h1>Colorme <a href="index.html" class="back-button">←</a></h1>           
         <div class="settings">
             <h2>Настройки игры</h2>
             <div class="settings-row">
@@ -441,28 +456,38 @@
                     <input type="number" id="grid-height" min="3" max="10" value="5">
                 </div>
             </div>
-            <button id="new-game-btn" class="new-game-btn">Новая игра</button>
+            <button id="new-game-btn" class="new-game-btn" title="Новая игра">
+                <img src="img/play.png" alt="Новая игра" class="icon-btn">
+            </button>
         </div>
         
         <!-- Сообщение о победе над задуманным рисунком -->
-        <div class="victory-message-area" id="victory-message-area" style="min-height: 60px; margin: 15px 0; display: flex; justify-content: center; align-items: center;"></div>
+        <div class="victory-message-area" id="victory-message-area"></div>
         
         <div class="target-pattern" id="target-pattern" style="display: none;">
             <h3>Воссоздайте этот рисунок:</h3>
+<!-- <div class="game-message" id="game-message">Нажмите "Новая игра" чтобы начать!</div> -->
             <div class="target-grid" id="target-grid"></div>
         </div>
-        
-        <div class="game-message" id="game-message">Нажмите "Новая игра" чтобы начать!</div>
+               
         
         <div class="game-area" id="game-area" style="display: none;">
             <div class="game-grid" id="game-grid"></div>
         </div>
         
         <div class="controls">
-            <button id="undo-btn" style="display: none;">Отменить</button>
-            <button id="clear-btn" style="display: none;">Очистить</button>
-            <button id="new-game-during-btn" class="new-game-btn" style="display: none;">Новая игра</button>
-            <button id="new-game-win-btn" class="new-game-btn" style="display: none;">Новая игра</button>
+            <button id="undo-btn" style="display: none;" title="Отменить">
+                <img src="img/undo.png" alt="Отменить" class="icon-btn">
+            </button>
+            <button id="clear-btn" style="display: none;" title="Очистить">
+                <img src="img/trash.png" alt="Очистить" class="icon-btn">
+            </button>
+            <button id="new-game-during-btn" class="new-game-btn" style="display: none;" title="Новая игра">
+                <img src="img/play.png" alt="Новая игра" class="icon-btn">
+            </button>
+            <button id="new-game-win-btn" class="new-game-btn" style="display: none;" title="Новая игра">
+                <img src="img/play.png" alt="Новая игра" class="icon-btn">
+            </button>
         </div>
     </div>
     <script>
@@ -492,7 +517,6 @@
         const newGameWinBtn = document.getElementById('new-game-win-btn');
         const undoBtn = document.getElementById('undo-btn');
         const clearBtn = document.getElementById('clear-btn');
-        const gameMessage = document.getElementById('game-message');
         const targetPattern = document.getElementById('target-pattern');
         const targetGrid = document.getElementById('target-grid');
         const gameArea = document.getElementById('game-area');
@@ -540,7 +564,6 @@
             newGameWinBtn.style.display = 'none';
             
             gameState.isGameActive = true;
-            gameMessage.textContent = "Воссоздайте показанный рисунок!";
             
             // Очищаем область победного сообщения
             const victoryArea = document.getElementById('victory-message-area');
@@ -877,16 +900,11 @@
                 const victoryArea = document.getElementById('victory-message-area');
                 victoryArea.innerHTML = `<div class="victory-message">Поздравляем! Вы выиграли за ${gameState.moves} ходов!</div>`;
                 
-                // Обычное сообщение остается пустым
-                gameMessage.textContent = '';
-                
                 // Скрываем кнопки управления и показываем кнопку новой игры
                 undoBtn.style.display = 'none';
                 clearBtn.style.display = 'none';
                 newGameDuringBtn.style.display = 'none';
                 newGameWinBtn.style.display = 'inline-block';
-            } else {
-                gameMessage.textContent = `Попробуйте еще! (Ходов: ${gameState.moves})`;
             }
         }
 
@@ -910,8 +928,6 @@
                     }
                 }
             }
-            
-            gameMessage.textContent = `Отменено! (Ходов: ${gameState.moves})`;
         }
 
         // Очистить поле
@@ -930,7 +946,6 @@
             
             gameState.moves = 0;
             gameState.moveHistory = [];
-            gameMessage.textContent = "Поле очищено! Начните заново.";
         }
 
         // Слушатели событий
